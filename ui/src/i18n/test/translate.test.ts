@@ -41,6 +41,18 @@ describe("i18n", () => {
     expect(t("common.health")).toBe("健康状况");
   });
 
+  it("loads Russian translations when requested", async () => {
+    const internal = i18n as unknown as {
+      locale: string;
+      translations: Record<string, unknown>;
+    };
+    internal.locale = "ru";
+    delete internal.translations.ru;
+
+    await i18n.setLocale("ru");
+    expect(t("common.health")).toBe("Здоровье");
+  });
+
   it("loads saved non-English locale on startup", async () => {
     localStorage.setItem("openclaw.i18n.locale", "zh-CN");
     vi.resetModules();
