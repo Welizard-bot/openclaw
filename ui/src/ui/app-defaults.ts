@@ -36,10 +36,5 @@ export const DEFAULT_CRON_FORM: CronFormState = {
   deliveryChannel: "last",
   deliveryTo: "",
   deliveryBestEffort: false,
-  failureAlertMode: "inherit",
-  failureAlertAfter: "2",
-  failureAlertCooldownSeconds: "3600",
-  failureAlertChannel: "last",
-  failureAlertTo: "",
   timeoutSeconds: "",
 };

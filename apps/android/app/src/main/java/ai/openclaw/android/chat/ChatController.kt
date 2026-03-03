@@ -311,14 +311,17 @@ class ChatController(
     if (!sessionKey.isNullOrEmpty() && sessionKey != _sessionKey.value) return
 
     val runId = payload["runId"].asStringOrNull()
-    val isPending =
-      if (runId != null) synchronized(pendingRuns) { pendingRuns.contains(runId) } else true
+    if (runId != null) {
+      val isPending =
+        synchronized(pendingRuns) {
+          pendingRuns.contains(runId)
+        }
+      if (!isPending) return
+    }
 
     val state = payload["state"].asStringOrNull()
     when (state) {
       "delta" -> {
-        // Only show streaming text for runs we initiated
-        if (!isPending) return
         val text = parseAssistantDeltaText(payload)
         if (!text.isNullOrEmpty()) {
           _streamingAssistantText.value = text

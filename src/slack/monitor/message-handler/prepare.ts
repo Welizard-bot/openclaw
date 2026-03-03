@@ -29,10 +29,9 @@ import { logVerbose, shouldLogVerbose } from "../../../globals.js";
 import { enqueueSystemEvent } from "../../../infra/system-events.js";
 import { resolveAgentRoute } from "../../../routing/resolve-route.js";
 import { resolveThreadSessionKeys } from "../../../routing/session-key.js";
-import { resolveSlackReplyToMode, type ResolvedSlackAccount } from "../../accounts.js";
+import type { ResolvedSlackAccount } from "../../accounts.js";
 import { reactSlackMessage } from "../../actions.js";
 import { sendMessageSlack } from "../../send.js";
-import { hasSlackThreadParticipation } from "../../sent-thread-cache.js";
 import { resolveSlackThreadContext } from "../../threading.js";
 import type { SlackMessageEvent } from "../../types.js";
 import { resolveSlackAllowListMatch, resolveSlackUserAllowed } from "../allow-list.js";
@@ -176,24 +175,13 @@ export async function prepareSlackMessage(params: {
   });
 
   const baseSessionKey = route.sessionKey;
-  const chatType = isDirectMessage ? "direct" : isGroupDm ? "group" : "channel";
-  const replyToMode = resolveSlackReplyToMode(account, chatType);
-  const threadContext = resolveSlackThreadContext({ message, replyToMode });
+  const threadContext = resolveSlackThreadContext({ message, replyToMode: ctx.replyToMode });
   const threadTs = threadContext.incomingThreadTs;
   const isThreadReply = threadContext.isThreadReply;
-  // When replyToMode="all", every top-level message starts a new thread.
-  // Use its own ts as threadId so the initial message AND subsequent replies
-  // in that thread share an isolated session (instead of falling back to the
-  // base DM/channel session for the first message).
-  const autoThreadId =
-    !isThreadReply && replyToMode === "all" && threadContext.messageTs
-      ? threadContext.messageTs
-      : undefined;
   const threadKeys = resolveThreadSessionKeys({
     baseSessionKey,
-    threadId: isThreadReply ? threadTs : autoThreadId,
-    parentSessionKey:
-      (isThreadReply || autoThreadId) && ctx.threadInheritParent ? baseSessionKey : undefined,
+    threadId: isThreadReply ? threadTs : undefined,
+    parentSessionKey: isThreadReply && ctx.threadInheritParent ? baseSessionKey : undefined,
   });
   const sessionKey = threadKeys.sessionKey;
   const historyKey =
@@ -220,8 +208,7 @@ export async function prepareSlackMessage(params: {
     !isDirectMessage &&
     ctx.botUserId &&
     message.thread_ts &&
-    (message.parent_user_id === ctx.botUserId ||
-      hasSlackThreadParticipation(account.accountId, message.channel, message.thread_ts)),
+    message.parent_user_id === ctx.botUserId,
   );
 
   const sender = message.user ? await ctx.resolveUserName(message.user) : null;
@@ -270,10 +257,7 @@ export async function prepareSlackMessage(params: {
     useAccessGroups: ctx.useAccessGroups,
     authorizers: [
       { configured: allowFromLower.length > 0, allowed: ownerAuthorized },
-      {
-        configured: channelUsersAllowlistConfigured,
-        allowed: channelCommandAuthorized,
-      },
+      { configured: channelUsersAllowlistConfigured, allowed: channelCommandAuthorized },
     ],
     allowTextCommands,
     hasControlCommand: hasControlCommandInMessage,
@@ -366,25 +350,8 @@ export async function prepareSlackMessage(params: {
       : undefined;
   const fileOnlyPlaceholder = fileOnlyFallback ? `[Slack file: ${fileOnlyFallback}]` : undefined;
 
-  // Bot messages (e.g. Prometheus, Gatus webhooks) often carry content only in
-  // non-forwarded attachments (is_share !== true).  Extract their text/fallback
-  // so the message isn't silently dropped when `allowBots: true` (#27616).
-  const botAttachmentText =
-    isBotMessage && !attachmentContent?.text
-      ? (message.attachments ?? [])
-          .map((a) => a.text?.trim() || a.fallback?.trim())
-          .filter(Boolean)
-          .join("\n")
-      : undefined;
-
   const rawBody =
-    [
-      (message.text ?? "").trim(),
-      attachmentContent?.text,
-      botAttachmentText,
-      mediaPlaceholder,
-      fileOnlyPlaceholder,
-    ]
+    [(message.text ?? "").trim(), attachmentContent?.text, mediaPlaceholder, fileOnlyPlaceholder]
       .filter(Boolean)
       .join("\n") || "";
   if (!rawBody) {
@@ -699,7 +666,6 @@ export async function prepareSlackMessage(params: {
     channelConfig,
     replyTarget,
     ctxPayload,
-    replyToMode,
     isDirectMessage,
     isRoomish,
     historyKey,

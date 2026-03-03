@@ -2383,7 +2383,6 @@ public struct CronJob: Codable, Sendable {
     public let wakemode: AnyCodable
     public let payload: AnyCodable
     public let delivery: AnyCodable?
-    public let failurealert: AnyCodable?
     public let state: [String: AnyCodable]
 
     public init(
@@ -2401,7 +2400,6 @@ public struct CronJob: Codable, Sendable {
         wakemode: AnyCodable,
         payload: AnyCodable,
         delivery: AnyCodable?,
-        failurealert: AnyCodable?,
         state: [String: AnyCodable])
     {
         self.id = id
@@ -2418,7 +2416,6 @@ public struct CronJob: Codable, Sendable {
         self.wakemode = wakemode
         self.payload = payload
         self.delivery = delivery
-        self.failurealert = failurealert
         self.state = state
     }
 
@@ -2437,7 +2434,6 @@ public struct CronJob: Codable, Sendable {
         case wakemode = "wakeMode"
         case payload
         case delivery
-        case failurealert = "failureAlert"
         case state
     }
 }
@@ -2494,7 +2490,6 @@ public struct CronAddParams: Codable, Sendable {
     public let wakemode: AnyCodable
     public let payload: AnyCodable
     public let delivery: AnyCodable?
-    public let failurealert: AnyCodable?
 
     public init(
         name: String,
@@ -2507,8 +2502,7 @@ public struct CronAddParams: Codable, Sendable {
         sessiontarget: AnyCodable,
         wakemode: AnyCodable,
         payload: AnyCodable,
-        delivery: AnyCodable?,
-        failurealert: AnyCodable?)
+        delivery: AnyCodable?)
     {
         self.name = name
         self.agentid = agentid
@@ -2521,7 +2515,6 @@ public struct CronAddParams: Codable, Sendable {
         self.wakemode = wakemode
         self.payload = payload
         self.delivery = delivery
-        self.failurealert = failurealert
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -2536,7 +2529,6 @@ public struct CronAddParams: Codable, Sendable {
         case wakemode = "wakeMode"
         case payload
         case delivery
-        case failurealert = "failureAlert"
     }
 }
 

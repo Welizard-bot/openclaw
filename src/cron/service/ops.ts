@@ -164,9 +164,7 @@ function sortJobs(jobs: CronJob[], sortBy: CronJobsSortBy, sortDir: CronSortDir)
   return jobs.toSorted((a, b) => {
     let cmp = 0;
     if (sortBy === "name") {
-      const aName = typeof a.name === "string" ? a.name : "";
-      const bName = typeof b.name === "string" ? b.name : "";
-      cmp = aName.localeCompare(bName, undefined, { sensitivity: "base" });
+      cmp = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
     } else if (sortBy === "updatedAtMs") {
       cmp = a.updatedAtMs - b.updatedAtMs;
     } else {
@@ -185,9 +183,7 @@ function sortJobs(jobs: CronJob[], sortBy: CronJobsSortBy, sortDir: CronSortDir)
     if (cmp !== 0) {
       return cmp * dir;
     }
-    const aId = typeof a.id === "string" ? a.id : "";
-    const bId = typeof b.id === "string" ? b.id : "";
-    return aId.localeCompare(bId);
+    return a.id.localeCompare(b.id);
   });
 }
 

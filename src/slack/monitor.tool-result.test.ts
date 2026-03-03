@@ -6,9 +6,7 @@ import {
   defaultSlackTestConfig,
   getSlackTestState,
   getSlackClient,
-  getSlackHandlers,
   getSlackHandlerOrThrow,
-  flush,
   resetSlackTestState,
   runSlackMessageOnce,
   startSlackMonitor,
@@ -120,32 +118,6 @@ describe("monitorSlackProvider tool results", () => {
       },
     };
   }
-
-  it("skips socket startup when Slack channel is disabled", async () => {
-    slackTestState.config = {
-      channels: {
-        slack: {
-          enabled: false,
-          mode: "socket",
-          botToken: "xoxb-config",
-          appToken: "xapp-config",
-        },
-      },
-    };
-    const client = getSlackClient();
-    if (!client) {
-      throw new Error("Slack client not registered");
-    }
-    client.auth.test.mockClear();
-
-    const { controller, run } = startSlackMonitor(monitorSlackProvider);
-    await flush();
-    controller.abort();
-    await run;
-
-    expect(client.auth.test).not.toHaveBeenCalled();
-    expect(getSlackHandlers()?.size ?? 0).toBe(0);
-  });
 
   it("skips tool summaries with responsePrefix", async () => {
     replyMock.mockResolvedValue({ text: "final reply" });

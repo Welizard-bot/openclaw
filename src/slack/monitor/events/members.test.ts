@@ -21,16 +21,9 @@ type SlackMemberHandler = (args: {
   body: unknown;
 }) => Promise<void>;
 
-function createMembersContext(params?: {
-  overrides?: SlackSystemEventTestOverrides;
-  trackEvent?: () => void;
-  shouldDropMismatchedSlackEvent?: (body: unknown) => boolean;
-}) {
-  const harness = createSlackSystemEventTestHarness(params?.overrides);
-  if (params?.shouldDropMismatchedSlackEvent) {
-    harness.ctx.shouldDropMismatchedSlackEvent = params.shouldDropMismatchedSlackEvent;
-  }
-  registerSlackMemberEvents({ ctx: harness.ctx, trackEvent: params?.trackEvent });
+function createMembersContext(overrides?: SlackSystemEventTestOverrides) {
+  const harness = createSlackSystemEventTestHarness(overrides);
+  registerSlackMemberEvents({ ctx: harness.ctx });
   return {
     getJoinedHandler: () =>
       harness.getHandler("member_joined_channel") as SlackMemberHandler | null,
@@ -51,7 +44,7 @@ describe("registerSlackMemberEvents", () => {
   it("enqueues DM member events when dmPolicy is open", async () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
-    const { getJoinedHandler } = createMembersContext({ overrides: { dmPolicy: "open" } });
+    const { getJoinedHandler } = createMembersContext({ dmPolicy: "open" });
     const joinedHandler = getJoinedHandler();
     expect(joinedHandler).toBeTruthy();
 
@@ -66,7 +59,7 @@ describe("registerSlackMemberEvents", () => {
   it("blocks DM member events when dmPolicy is disabled", async () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
-    const { getJoinedHandler } = createMembersContext({ overrides: { dmPolicy: "disabled" } });
+    const { getJoinedHandler } = createMembersContext({ dmPolicy: "disabled" });
     const joinedHandler = getJoinedHandler();
     expect(joinedHandler).toBeTruthy();
 
@@ -82,7 +75,8 @@ describe("registerSlackMemberEvents", () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
     const { getJoinedHandler } = createMembersContext({
-      overrides: { dmPolicy: "allowlist", allowFrom: ["U2"] },
+      dmPolicy: "allowlist",
+      allowFrom: ["U2"],
     });
     const joinedHandler = getJoinedHandler();
     expect(joinedHandler).toBeTruthy();
@@ -99,7 +93,8 @@ describe("registerSlackMemberEvents", () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
     const { getLeftHandler } = createMembersContext({
-      overrides: { dmPolicy: "allowlist", allowFrom: ["U1"] },
+      dmPolicy: "allowlist",
+      allowFrom: ["U1"],
     });
     const leftHandler = getLeftHandler();
     expect(leftHandler).toBeTruthy();
@@ -119,11 +114,9 @@ describe("registerSlackMemberEvents", () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
     const { getJoinedHandler } = createMembersContext({
-      overrides: {
-        dmPolicy: "open",
-        channelType: "channel",
-        channelUsers: ["U_OWNER"],
-      },
+      dmPolicy: "open",
+      channelType: "channel",
+      channelUsers: ["U_OWNER"],
     });
     const joinedHandler = getJoinedHandler();
     expect(joinedHandler).toBeTruthy();
@@ -134,36 +127,5 @@ describe("registerSlackMemberEvents", () => {
     });
 
     expect(enqueueSystemEventMock).not.toHaveBeenCalled();
-  });
-
-  it("does not track mismatched events", async () => {
-    const trackEvent = vi.fn();
-    const { getJoinedHandler } = createMembersContext({
-      trackEvent,
-      shouldDropMismatchedSlackEvent: () => true,
-    });
-    const joinedHandler = getJoinedHandler();
-    expect(joinedHandler).toBeTruthy();
-
-    await joinedHandler!({
-      event: makeMemberEvent(),
-      body: { api_app_id: "A_OTHER" },
-    });
-
-    expect(trackEvent).not.toHaveBeenCalled();
-  });
-
-  it("tracks accepted member events", async () => {
-    const trackEvent = vi.fn();
-    const { getJoinedHandler } = createMembersContext({ trackEvent });
-    const joinedHandler = getJoinedHandler();
-    expect(joinedHandler).toBeTruthy();
-
-    await joinedHandler!({
-      event: makeMemberEvent(),
-      body: {},
-    });
-
-    expect(trackEvent).toHaveBeenCalledTimes(1);
   });
 });

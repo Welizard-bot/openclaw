@@ -5,11 +5,8 @@ import type { SlackMonitorContext } from "../context.js";
 import type { SlackMemberChannelEvent } from "../types.js";
 import { authorizeAndResolveSlackSystemEventContext } from "./system-event-context.js";
 
-export function registerSlackMemberEvents(params: {
-  ctx: SlackMonitorContext;
-  trackEvent?: () => void;
-}) {
-  const { ctx, trackEvent } = params;
+export function registerSlackMemberEvents(params: { ctx: SlackMonitorContext }) {
+  const { ctx } = params;
 
   const handleMemberChannelEvent = async (params: {
     verb: "joined" | "left";
@@ -20,7 +17,6 @@ export function registerSlackMemberEvents(params: {
       if (ctx.shouldDropMismatchedSlackEvent(params.body)) {
         return;
       }
-      trackEvent?.();
       const payload = params.event;
       const channelId = payload.channel;
       const channelInfo = channelId ? await ctx.resolveChannelName(channelId) : {};

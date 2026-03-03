@@ -18,16 +18,9 @@ vi.mock("../../../pairing/pairing-store.js", () => ({
 
 type SlackPinHandler = (args: { event: Record<string, unknown>; body: unknown }) => Promise<void>;
 
-function createPinContext(params?: {
-  overrides?: SlackSystemEventTestOverrides;
-  trackEvent?: () => void;
-  shouldDropMismatchedSlackEvent?: (body: unknown) => boolean;
-}) {
-  const harness = createSlackSystemEventTestHarness(params?.overrides);
-  if (params?.shouldDropMismatchedSlackEvent) {
-    harness.ctx.shouldDropMismatchedSlackEvent = params.shouldDropMismatchedSlackEvent;
-  }
-  registerSlackPinEvents({ ctx: harness.ctx, trackEvent: params?.trackEvent });
+function createPinContext(overrides?: SlackSystemEventTestOverrides) {
+  const harness = createSlackSystemEventTestHarness(overrides);
+  registerSlackPinEvents({ ctx: harness.ctx });
   return {
     getAddedHandler: () => harness.getHandler("pin_added") as SlackPinHandler | null,
     getRemovedHandler: () => harness.getHandler("pin_removed") as SlackPinHandler | null,
@@ -53,7 +46,7 @@ describe("registerSlackPinEvents", () => {
   it("enqueues DM pin system events when dmPolicy is open", async () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
-    const { getAddedHandler } = createPinContext({ overrides: { dmPolicy: "open" } });
+    const { getAddedHandler } = createPinContext({ dmPolicy: "open" });
     const addedHandler = getAddedHandler();
     expect(addedHandler).toBeTruthy();
 
@@ -68,7 +61,7 @@ describe("registerSlackPinEvents", () => {
   it("blocks DM pin system events when dmPolicy is disabled", async () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
-    const { getAddedHandler } = createPinContext({ overrides: { dmPolicy: "disabled" } });
+    const { getAddedHandler } = createPinContext({ dmPolicy: "disabled" });
     const addedHandler = getAddedHandler();
     expect(addedHandler).toBeTruthy();
 
@@ -84,7 +77,8 @@ describe("registerSlackPinEvents", () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
     const { getAddedHandler } = createPinContext({
-      overrides: { dmPolicy: "allowlist", allowFrom: ["U2"] },
+      dmPolicy: "allowlist",
+      allowFrom: ["U2"],
     });
     const addedHandler = getAddedHandler();
     expect(addedHandler).toBeTruthy();
@@ -101,7 +95,8 @@ describe("registerSlackPinEvents", () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
     const { getAddedHandler } = createPinContext({
-      overrides: { dmPolicy: "allowlist", allowFrom: ["U1"] },
+      dmPolicy: "allowlist",
+      allowFrom: ["U1"],
     });
     const addedHandler = getAddedHandler();
     expect(addedHandler).toBeTruthy();
@@ -118,11 +113,9 @@ describe("registerSlackPinEvents", () => {
     enqueueSystemEventMock.mockClear();
     readAllowFromStoreMock.mockReset().mockResolvedValue([]);
     const { getAddedHandler } = createPinContext({
-      overrides: {
-        dmPolicy: "open",
-        channelType: "channel",
-        channelUsers: ["U_OWNER"],
-      },
+      dmPolicy: "open",
+      channelType: "channel",
+      channelUsers: ["U_OWNER"],
     });
     const addedHandler = getAddedHandler();
     expect(addedHandler).toBeTruthy();
@@ -133,36 +126,5 @@ describe("registerSlackPinEvents", () => {
     });
 
     expect(enqueueSystemEventMock).not.toHaveBeenCalled();
-  });
-
-  it("does not track mismatched events", async () => {
-    const trackEvent = vi.fn();
-    const { getAddedHandler } = createPinContext({
-      trackEvent,
-      shouldDropMismatchedSlackEvent: () => true,
-    });
-    const addedHandler = getAddedHandler();
-    expect(addedHandler).toBeTruthy();
-
-    await addedHandler!({
-      event: makePinEvent(),
-      body: { api_app_id: "A_OTHER" },
-    });
-
-    expect(trackEvent).not.toHaveBeenCalled();
-  });
-
-  it("tracks accepted pin events", async () => {
-    const trackEvent = vi.fn();
-    const { getAddedHandler } = createPinContext({ trackEvent });
-    const addedHandler = getAddedHandler();
-    expect(addedHandler).toBeTruthy();
-
-    await addedHandler!({
-      event: makePinEvent(),
-      body: {},
-    });
-
-    expect(trackEvent).toHaveBeenCalledTimes(1);
   });
 });

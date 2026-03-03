@@ -114,9 +114,6 @@ export const de: TranslationMap = {
     refreshTitle: "Chat-Daten aktualisieren",
     thinkingToggle: "Ausgabe des Assistenten ein-/ausblenden",
     focusToggle: "Fokusmodus ein-/ausschalten (Seitenleiste + Kopfzeile ausblenden)",
-    hideCronSessions: "Cron-Sitzungen ausblenden",
-    showCronSessions: "Cron-Sitzungen anzeigen",
-    showCronSessionsHidden: "Cron-Sitzungen anzeigen ({count} ausgeblendet)",
     onboardingDisabled: "Während der Einrichtung deaktiviert",
   },
   languages: {

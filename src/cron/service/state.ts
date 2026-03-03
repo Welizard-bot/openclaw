@@ -5,7 +5,6 @@ import type {
   CronJob,
   CronJobCreate,
   CronJobPatch,
-  CronMessageChannel,
   CronRunOutcome,
   CronRunStatus,
   CronRunTelemetry,
@@ -91,12 +90,6 @@ export type CronServiceDeps = {
     } & CronRunOutcome &
       CronRunTelemetry
   >;
-  sendCronFailureAlert?: (params: {
-    job: CronJob;
-    text: string;
-    channel: CronMessageChannel;
-    to?: string;
-  }) => Promise<void>;
   onEvent?: (evt: CronEvent) => void;
 };
 

@@ -1,4 +1,3 @@
-import { t } from "../../i18n/index.ts";
 import { DEFAULT_CRON_FORM } from "../app-defaults.ts";
 import { toNumber } from "../format.ts";
 import type { GatewayBrowserClient } from "../gateway.ts";
@@ -29,14 +28,9 @@ export type CronFieldKey =
   | "payloadModel"
   | "payloadThinking"
   | "timeoutSeconds"
-  | "deliveryTo"
-  | "failureAlertAfter"
-  | "failureAlertCooldownSeconds";
+  | "deliveryTo";
 
 export type CronFieldErrors = Partial<Record<CronFieldKey, string>>;
-
-export type CronJobsScheduleKindFilter = "all" | "at" | "every" | "cron";
-export type CronJobsLastStatusFilter = "all" | "ok" | "error" | "skipped";
 
 export type CronState = {
   client: GatewayBrowserClient | null;
@@ -50,8 +44,6 @@ export type CronState = {
   cronJobsLimit: number;
   cronJobsQuery: string;
   cronJobsEnabledFilter: CronJobsEnabledFilter;
-  cronJobsScheduleKindFilter: CronJobsScheduleKindFilter;
-  cronJobsLastStatusFilter: CronJobsLastStatusFilter;
   cronJobsSortBy: CronJobsSortBy;
   cronJobsSortDir: CronSortDir;
   cronStatus: CronStatus | null;
@@ -103,28 +95,28 @@ export function normalizeCronFormState(form: CronFormState): CronFormState {
 export function validateCronForm(form: CronFormState): CronFieldErrors {
   const errors: CronFieldErrors = {};
   if (!form.name.trim()) {
-    errors.name = "cron.errors.nameRequired";
+    errors.name = "Name is required.";
   }
   if (form.scheduleKind === "at") {
     const ms = Date.parse(form.scheduleAt);
     if (!Number.isFinite(ms)) {
-      errors.scheduleAt = "cron.errors.scheduleAtInvalid";
+      errors.scheduleAt = "Enter a valid date/time.";
     }
   } else if (form.scheduleKind === "every") {
     const amount = toNumber(form.everyAmount, 0);
     if (amount <= 0) {
-      errors.everyAmount = "cron.errors.everyAmountInvalid";
+      errors.everyAmount = "Interval must be greater than 0.";
     }
   } else {
     if (!form.cronExpr.trim()) {
-      errors.cronExpr = "cron.errors.cronExprRequired";
+      errors.cronExpr = "Cron expression is required.";
     }
     if (!form.scheduleExact) {
       const staggerAmount = form.staggerAmount.trim();
       if (staggerAmount) {
         const stagger = toNumber(staggerAmount, 0);
         if (stagger <= 0) {
-          errors.staggerAmount = "cron.errors.staggerAmountInvalid";
+          errors.staggerAmount = "Stagger must be greater than 0.";
         }
       }
     }
@@ -132,40 +124,24 @@ export function validateCronForm(form: CronFormState): CronFieldErrors {
   if (!form.payloadText.trim()) {
     errors.payloadText =
       form.payloadKind === "systemEvent"
-        ? "cron.errors.systemTextRequired"
-        : "cron.errors.agentMessageRequired";
+        ? "System text is required."
+        : "Agent message is required.";
   }
   if (form.payloadKind === "agentTurn") {
     const timeoutRaw = form.timeoutSeconds.trim();
     if (timeoutRaw) {
       const timeout = toNumber(timeoutRaw, 0);
       if (timeout <= 0) {
-        errors.timeoutSeconds = "cron.errors.timeoutInvalid";
+        errors.timeoutSeconds = "If set, timeout must be greater than 0 seconds.";
       }
     }
   }
   if (form.deliveryMode === "webhook") {
     const target = form.deliveryTo.trim();
     if (!target) {
-      errors.deliveryTo = "cron.errors.webhookUrlRequired";
+      errors.deliveryTo = "Webhook URL is required.";
     } else if (!/^https?:\/\//i.test(target)) {
-      errors.deliveryTo = "cron.errors.webhookUrlInvalid";
-    }
-  }
-  if (form.failureAlertMode === "custom") {
-    const afterRaw = form.failureAlertAfter.trim();
-    if (afterRaw) {
-      const after = toNumber(afterRaw, 0);
-      if (!Number.isFinite(after) || after <= 0) {
-        errors.failureAlertAfter = "Failure alert threshold must be greater than 0.";
-      }
-    }
-    const cooldownRaw = form.failureAlertCooldownSeconds.trim();
-    if (cooldownRaw) {
-      const cooldown = toNumber(cooldownRaw, -1);
-      if (!Number.isFinite(cooldown) || cooldown < 0) {
-        errors.failureAlertCooldownSeconds = "Cooldown must be 0 or greater.";
-      }
+      errors.deliveryTo = "Webhook URL must start with http:// or https://.";
     }
   }
   return errors;
@@ -321,12 +297,7 @@ export function updateCronJobsFilter(
   patch: Partial<
     Pick<
       CronState,
-      | "cronJobsQuery"
-      | "cronJobsEnabledFilter"
-      | "cronJobsScheduleKindFilter"
-      | "cronJobsLastStatusFilter"
-      | "cronJobsSortBy"
-      | "cronJobsSortDir"
+      "cronJobsQuery" | "cronJobsEnabledFilter" | "cronJobsSortBy" | "cronJobsSortDir"
     >
   >,
 ) {
@@ -336,38 +307,12 @@ export function updateCronJobsFilter(
   if (patch.cronJobsEnabledFilter) {
     state.cronJobsEnabledFilter = patch.cronJobsEnabledFilter;
   }
-  if (patch.cronJobsScheduleKindFilter) {
-    state.cronJobsScheduleKindFilter = patch.cronJobsScheduleKindFilter;
-  }
-  if (patch.cronJobsLastStatusFilter) {
-    state.cronJobsLastStatusFilter = patch.cronJobsLastStatusFilter;
-  }
   if (patch.cronJobsSortBy) {
     state.cronJobsSortBy = patch.cronJobsSortBy;
   }
   if (patch.cronJobsSortDir) {
     state.cronJobsSortDir = patch.cronJobsSortDir;
   }
-}
-
-export function getVisibleCronJobs(
-  state: Pick<CronState, "cronJobs" | "cronJobsScheduleKindFilter" | "cronJobsLastStatusFilter">,
-): CronJob[] {
-  return state.cronJobs.filter((job) => {
-    if (
-      state.cronJobsScheduleKindFilter !== "all" &&
-      job.schedule.kind !== state.cronJobsScheduleKindFilter
-    ) {
-      return false;
-    }
-    if (
-      state.cronJobsLastStatusFilter !== "all" &&
-      job.state?.lastStatus !== state.cronJobsLastStatusFilter
-    ) {
-      return false;
-    }
-    return true;
-  });
 }
 
 function clearCronEditState(state: CronState) {
@@ -428,7 +373,6 @@ function parseStaggerSchedule(
 }
 
 function jobToForm(job: CronJob, prev: CronFormState): CronFormState {
-  const failureAlert = job.failureAlert;
   const next: CronFormState = {
     ...prev,
     name: job.name,
@@ -456,27 +400,6 @@ function jobToForm(job: CronJob, prev: CronFormState): CronFormState {
     deliveryChannel: job.delivery?.channel ?? CRON_CHANNEL_LAST,
     deliveryTo: job.delivery?.to ?? "",
     deliveryBestEffort: job.delivery?.bestEffort ?? false,
-    failureAlertMode:
-      failureAlert === false
-        ? "disabled"
-        : failureAlert && typeof failureAlert === "object"
-          ? "custom"
-          : "inherit",
-    failureAlertAfter:
-      failureAlert && typeof failureAlert === "object" && typeof failureAlert.after === "number"
-        ? String(failureAlert.after)
-        : DEFAULT_CRON_FORM.failureAlertAfter,
-    failureAlertCooldownSeconds:
-      failureAlert &&
-      typeof failureAlert === "object" &&
-      typeof failureAlert.cooldownMs === "number"
-        ? String(Math.floor(failureAlert.cooldownMs / 1000))
-        : DEFAULT_CRON_FORM.failureAlertCooldownSeconds,
-    failureAlertChannel:
-      failureAlert && typeof failureAlert === "object"
-        ? (failureAlert.channel ?? CRON_CHANNEL_LAST)
-        : CRON_CHANNEL_LAST,
-    failureAlertTo: failureAlert && typeof failureAlert === "object" ? (failureAlert.to ?? "") : "",
     timeoutSeconds:
       job.payload.kind === "agentTurn" && typeof job.payload.timeoutSeconds === "number"
         ? String(job.payload.timeoutSeconds)
@@ -505,14 +428,14 @@ export function buildCronSchedule(form: CronFormState) {
   if (form.scheduleKind === "at") {
     const ms = Date.parse(form.scheduleAt);
     if (!Number.isFinite(ms)) {
-      throw new Error(t("cron.errors.invalidRunTime"));
+      throw new Error("Invalid run time.");
     }
     return { kind: "at" as const, at: new Date(ms).toISOString() };
   }
   if (form.scheduleKind === "every") {
     const amount = toNumber(form.everyAmount, 0);
     if (amount <= 0) {
-      throw new Error(t("cron.errors.invalidIntervalAmount"));
+      throw new Error("Invalid interval amount.");
     }
     const unit = form.everyUnit;
     const mult = unit === "minutes" ? 60_000 : unit === "hours" ? 3_600_000 : 86_400_000;
@@ -520,7 +443,7 @@ export function buildCronSchedule(form: CronFormState) {
   }
   const expr = form.cronExpr.trim();
   if (!expr) {
-    throw new Error(t("cron.errors.cronExprRequiredShort"));
+    throw new Error("Cron expression required.");
   }
   if (form.scheduleExact) {
     return { kind: "cron" as const, expr, tz: form.cronTz.trim() || undefined, staggerMs: 0 };
@@ -531,7 +454,7 @@ export function buildCronSchedule(form: CronFormState) {
   }
   const staggerValue = toNumber(staggerAmount, 0);
   if (staggerValue <= 0) {
-    throw new Error(t("cron.errors.invalidStaggerAmount"));
+    throw new Error("Invalid stagger amount.");
   }
   const staggerMs = form.staggerUnit === "minutes" ? staggerValue * 60_000 : staggerValue * 1_000;
   return { kind: "cron" as const, expr, tz: form.cronTz.trim() || undefined, staggerMs };
@@ -541,13 +464,13 @@ export function buildCronPayload(form: CronFormState) {
   if (form.payloadKind === "systemEvent") {
     const text = form.payloadText.trim();
     if (!text) {
-      throw new Error(t("cron.errors.systemEventTextRequired"));
+      throw new Error("System event text required.");
     }
     return { kind: "systemEvent" as const, text };
   }
   const message = form.payloadText.trim();
   if (!message) {
-    throw new Error(t("cron.errors.agentMessageRequiredShort"));
+    throw new Error("Agent message required.");
   }
   const payload: {
     kind: "agentTurn";
@@ -569,26 +492,6 @@ export function buildCronPayload(form: CronFormState) {
     payload.timeoutSeconds = timeoutSeconds;
   }
   return payload;
-}
-
-function buildFailureAlert(form: CronFormState) {
-  if (form.failureAlertMode === "disabled") {
-    return false as const;
-  }
-  if (form.failureAlertMode !== "custom") {
-    return undefined;
-  }
-  const after = toNumber(form.failureAlertAfter.trim(), 0);
-  const cooldownSeconds = toNumber(form.failureAlertCooldownSeconds.trim(), 0);
-  return {
-    after: after > 0 ? Math.floor(after) : undefined,
-    channel: form.failureAlertChannel.trim() || CRON_CHANNEL_LAST,
-    to: form.failureAlertTo.trim() || undefined,
-    cooldownMs:
-      Number.isFinite(cooldownSeconds) && cooldownSeconds >= 0
-        ? Math.floor(cooldownSeconds * 1000)
-        : undefined,
-  };
 }
 
 export async function addCronJob(state: CronState) {
@@ -623,7 +526,6 @@ export async function addCronJob(state: CronState) {
             bestEffort: form.deliveryBestEffort,
           }
         : undefined;
-    const failureAlert = buildFailureAlert(form);
     const agentId = form.clearAgent ? null : form.agentId.trim();
     const job = {
       name: form.name.trim(),
@@ -636,10 +538,9 @@ export async function addCronJob(state: CronState) {
       wakeMode: form.wakeMode,
       payload,
       delivery,
-      failureAlert,
     };
     if (!job.name) {
-      throw new Error(t("cron.errors.nameRequiredShort"));
+      throw new Error("Name required.");
     }
     if (state.cronEditingJobId) {
       await state.client.request("cron.update", {

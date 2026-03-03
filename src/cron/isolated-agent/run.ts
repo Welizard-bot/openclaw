@@ -16,7 +16,6 @@ import { runWithModelFallback } from "../../agents/model-fallback.js";
 import {
   getModelRefStatus,
   isCliProvider,
-  normalizeModelSelection,
   resolveAllowedModelRef,
   resolveConfiguredModelRef,
   resolveHooksGmailModel,
@@ -161,7 +160,6 @@ export async function runCronIsolatedAgentTurn(params: {
   });
   let provider = resolvedDefault.provider;
   let model = resolvedDefault.model;
-
   let catalog: Awaited<ReturnType<typeof loadModelCatalog>> | undefined;
   const loadCatalog = async () => {
     if (!catalog) {
@@ -169,24 +167,6 @@ export async function runCronIsolatedAgentTurn(params: {
     }
     return catalog;
   };
-  // Isolated cron sessions are subagents — prefer subagents.model when set,
-  // but only if it passes the model allowlist.  #11461
-  const subagentModelRaw =
-    normalizeModelSelection(agentConfigOverride?.subagents?.model) ??
-    normalizeModelSelection(params.cfg.agents?.defaults?.subagents?.model);
-  if (subagentModelRaw) {
-    const resolvedSubagent = resolveAllowedModelRef({
-      cfg: cfgWithAgentDefaults,
-      catalog: await loadCatalog(),
-      raw: subagentModelRaw,
-      defaultProvider: resolvedDefault.provider,
-      defaultModel: resolvedDefault.model,
-    });
-    if (!("error" in resolvedSubagent)) {
-      provider = resolvedSubagent.ref.provider;
-      model = resolvedSubagent.ref.model;
-    }
-  }
   // Resolve model - prefer hooks.gmail.model for Gmail hooks.
   const isGmailHook = baseSessionKey.startsWith("hook:gmail:");
   let hooksGmailModelApplied = false;
@@ -402,18 +382,9 @@ export async function runCronIsolatedAgentTurn(params: {
     await persistSessionEntry();
   }
 
-  // Persist the intended model and systemSent before the run so that
-  // sessions_list reflects the cron override even if the run fails or is
-  // still in progress (#21057).  Best-effort: a filesystem error here
-  // must not prevent the actual agent run from executing.
-  cronSession.sessionEntry.modelProvider = provider;
-  cronSession.sessionEntry.model = model;
+  // Persist systemSent before the run, mirroring the inbound auto-reply behavior.
   cronSession.sessionEntry.systemSent = true;
-  try {
-    await persistSessionEntry();
-  } catch (err) {
-    logWarn(`[cron:${params.job.id}] Failed to persist pre-run session entry: ${String(err)}`);
-  }
+  await persistSessionEntry();
 
   // Resolve auth profile for the session, mirroring the inbound auto-reply path
   // (get-reply-run.ts). Without this, isolated cron sessions fall back to env-var
@@ -446,18 +417,12 @@ export async function runCronIsolatedAgentTurn(params: {
       verboseLevel: resolvedVerboseLevel,
     });
     const messageChannel = resolvedDelivery.channel;
-    // Per-job payload.fallbacks takes priority over agent-level fallbacks.
-    const payloadFallbacks =
-      params.job.payload.kind === "agentTurn" && Array.isArray(params.job.payload.fallbacks)
-        ? params.job.payload.fallbacks
-        : undefined;
     const fallbackResult = await runWithModelFallback({
       cfg: cfgWithAgentDefaults,
       provider,
       model,
       agentDir,
-      fallbacksOverride:
-        payloadFallbacks ?? resolveAgentModelFallbacksOverride(params.cfg, agentId),
+      fallbacksOverride: resolveAgentModelFallbacksOverride(params.cfg, agentId),
       run: (providerOverride, modelOverride) => {
         if (abortSignal?.aborted) {
           throw new Error(abortReason());
@@ -605,29 +570,17 @@ export async function runCronIsolatedAgentTurn(params: {
     Object.keys(deliveryPayload?.channelData ?? {}).length > 0;
   const deliveryBestEffort = resolveCronDeliveryBestEffort(params.job);
   const hasErrorPayload = payloads.some((payload) => payload?.isError === true);
-  const runLevelError = runResult.meta?.error;
-  const lastErrorPayloadIndex = payloads.findLastIndex((payload) => payload?.isError === true);
-  const hasSuccessfulPayloadAfterLastError =
-    !runLevelError &&
-    lastErrorPayloadIndex >= 0 &&
-    payloads
-      .slice(lastErrorPayloadIndex + 1)
-      .some((payload) => payload?.isError !== true && Boolean(payload?.text?.trim()));
-  // Tool wrappers can emit transient/false-positive error payloads before a valid final
-  // assistant payload.  Only treat payload errors as recoverable when (a) the run itself
-  // did not report a model/context-level error and (b) a non-error payload follows.
-  const hasFatalErrorPayload = hasErrorPayload && !hasSuccessfulPayloadAfterLastError;
   const lastErrorPayloadText = [...payloads]
     .toReversed()
     .find((payload) => payload?.isError === true && Boolean(payload?.text?.trim()))
     ?.text?.trim();
-  const embeddedRunError = hasFatalErrorPayload
+  const embeddedRunError = hasErrorPayload
     ? (lastErrorPayloadText ?? "cron isolated run returned an error payload")
     : undefined;
   const resolveRunOutcome = (params?: { delivered?: boolean; deliveryAttempted?: boolean }) =>
     withRunSession({
-      status: hasFatalErrorPayload ? "error" : "ok",
-      ...(hasFatalErrorPayload
+      status: hasErrorPayload ? "error" : "ok",
+      ...(hasErrorPayload
         ? { error: embeddedRunError ?? "cron isolated run returned an error payload" }
         : {}),
       summary,
@@ -684,7 +637,7 @@ export async function runCronIsolatedAgentTurn(params: {
       deliveryAttempted:
         deliveryResult.result.deliveryAttempted ?? deliveryResult.deliveryAttempted,
     };
-    if (!hasFatalErrorPayload || deliveryResult.result.status !== "ok") {
+    if (!hasErrorPayload || deliveryResult.result.status !== "ok") {
       return resultWithDeliveryMeta;
     }
     return resolveRunOutcome({
