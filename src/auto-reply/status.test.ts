@@ -639,10 +639,10 @@ describe("buildCommandsMessage", () => {
     } as unknown as OpenClawConfig);
     expect(text).toContain("ℹ️ Slash commands");
     expect(text).toContain("Status");
-    expect(text).toContain("/commands - List all slash commands.");
-    expect(text).toContain("/skill - Run a skill by name.");
-    expect(text).toContain("/think (/thinking, /t) - Set thinking level.");
-    expect(text).toContain("/compact - Compact the session context.");
+    expect(text).toContain("/commands - Список всех slash-команд.");
+    expect(text).toContain("/skill - Запустить навык по имени.");
+    expect(text).toContain("/think (/thinking, /t) - Установить уровень размышления.");
+    expect(text).toContain("/compact - Уплотнить контекст сессии.");
     expect(text).not.toContain("/config");
     expect(text).not.toContain("/debug");
   });
