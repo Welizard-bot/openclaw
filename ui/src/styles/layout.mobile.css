@@ -191,6 +191,15 @@
     width: 100%;
   }
 
+  .wizard-card {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .wizard-option {
+    padding: 10px 12px;
+  }
+
   /* Forms */
   .form-grid {
     grid-template-columns: 1fr;

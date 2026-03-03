@@ -40,6 +40,7 @@ import type {
   SkillStatusReport,
   ToolsCatalogResult,
   StatusSummary,
+  WizardStep,
 } from "./types.ts";
 import type { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
@@ -146,6 +147,15 @@ export type AppViewState = {
   modelAuthBusyKey: string | null;
   modelAuthError: string | null;
   modelAuthStatus: ModelsAuthStatusResult | null;
+  wizardOpen: boolean;
+  wizardLoading: boolean;
+  wizardBusy: boolean;
+  wizardMode: "local" | "remote";
+  wizardSessionId: string | null;
+  wizardStatus: "running" | "done" | "cancelled" | "error" | null;
+  wizardError: string | null;
+  wizardStep: WizardStep | null;
+  wizardDraftValue: unknown;
   agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron";
   agentFilesLoading: boolean;
   agentFilesError: string | null;
@@ -312,6 +322,11 @@ export type AppViewState = {
   handlePromoteModelAuthProfile: (provider: string, profileId: string) => Promise<void>;
   handleClearModelAuthOrder: (provider: string) => Promise<void>;
   handleClearModelAuthCooldown: (profileId: string) => Promise<void>;
+  handleStartSetupWizard: (mode: "local" | "remote") => Promise<void>;
+  handleSubmitSetupWizard: () => Promise<void>;
+  handleCancelSetupWizard: () => Promise<void>;
+  handleDismissSetupWizard: () => void;
+  handleUpdateSetupWizardDraft: (value: unknown) => void;
   handleLoadSkills: () => Promise<void>;
   handleLoadDebug: () => Promise<void>;
   handleLoadLogs: () => Promise<void>;

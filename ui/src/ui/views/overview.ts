@@ -29,6 +29,9 @@ export type OverviewProps = {
   modelAuthBusyKey: string | null;
   modelAuthError: string | null;
   modelAuthStatus: ModelsAuthStatusResult | null;
+  wizardOpen: boolean;
+  wizardLoading: boolean;
+  wizardBusy: boolean;
   onSettingsChange: (next: UiSettings) => void;
   onPasswordChange: (next: string) => void;
   onSessionKeyChange: (next: string) => void;
@@ -38,6 +41,7 @@ export type OverviewProps = {
   onPromoteProfile: (provider: string, profileId: string) => void;
   onClearProviderOrder: (provider: string) => void;
   onClearProfileCooldown: (profileId: string) => void;
+  onStartWizard: (mode: "local" | "remote") => void;
 };
 
 function resolveAuthStatusChipClass(status: ModelsAuthProviderStatus["status"]) {
@@ -528,6 +532,37 @@ export function renderOverview(props: OverviewProps) {
           ${props.cronEnabled == null ? t("common.na") : props.cronEnabled ? t("common.enabled") : t("common.disabled")}
         </div>
         <div class="muted">${t("overview.stats.cronNext", { time: formatNextRun(props.cronNext) })}</div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 18px;">
+      <div class="row" style="justify-content: space-between; align-items: flex-start; gap: 16px;">
+        <div>
+          <div class="card-title">${t("overview.setup.title")}</div>
+          <div class="card-sub">${t("overview.setup.subtitle")}</div>
+        </div>
+        ${props.wizardOpen
+          ? html`<span class="chip chip-ok">${t("overview.setup.running")}</span>`
+          : nothing}
+      </div>
+      <div class="row" style="margin-top: 16px; gap: 10px; flex-wrap: wrap;">
+        <button
+          class="btn primary"
+          ?disabled=${!props.connected || props.wizardLoading || props.wizardBusy || props.wizardOpen}
+          @click=${() => props.onStartWizard("local")}
+        >
+          ${t("overview.setup.local")}
+        </button>
+        <button
+          class="btn"
+          ?disabled=${!props.connected || props.wizardLoading || props.wizardBusy || props.wizardOpen}
+          @click=${() => props.onStartWizard("remote")}
+        >
+          ${t("overview.setup.remote")}
+        </button>
+      </div>
+      <div class="muted" style="margin-top: 12px;">
+        ${t("overview.setup.hint")}
       </div>
     </section>
 

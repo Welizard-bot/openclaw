@@ -380,6 +380,10 @@ export type ModelsAuthProviderStatus =
   import("../../../src/commands/models/auth-status.js").ModelsAuthProviderStatus;
 export type ModelsAuthProfileStatus =
   import("../../../src/commands/models/auth-status.js").ModelsAuthProfileStatus;
+export type WizardStep = import("../../../src/gateway/protocol/schema/types.js").WizardStep;
+export type WizardNextResult = import("../../../src/gateway/protocol/schema/types.js").WizardNextResult;
+export type WizardStartResult =
+  import("../../../src/gateway/protocol/schema/types.js").WizardStartResult;
 
 export type AgentIdentityResult = {
   agentId: string;

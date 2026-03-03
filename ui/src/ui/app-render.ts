@@ -79,6 +79,7 @@ import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
+import { renderSetupWizard } from "./views/setup-wizard.ts";
 
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
@@ -343,6 +344,9 @@ export function renderApp(state: AppViewState) {
                 modelAuthBusyKey: state.modelAuthBusyKey,
                 modelAuthError: state.modelAuthError,
                 modelAuthStatus: state.modelAuthStatus,
+                wizardOpen: state.wizardOpen,
+                wizardLoading: state.wizardLoading,
+                wizardBusy: state.wizardBusy,
                 onSettingsChange: (next) => state.applySettings(next),
                 onPasswordChange: (next) => (state.password = next),
                 onSessionKeyChange: (next) => {
@@ -365,6 +369,7 @@ export function renderApp(state: AppViewState) {
                   void state.handleClearModelAuthOrder(provider),
                 onClearProfileCooldown: (profileId) =>
                   void state.handleClearModelAuthCooldown(profileId),
+                onStartWizard: (mode) => void state.handleStartSetupWizard(mode),
               })
             : nothing
         }
@@ -1148,6 +1153,7 @@ export function renderApp(state: AppViewState) {
       </main>
       ${renderExecApprovalPrompt(state)}
       ${renderGatewayUrlConfirmation(state)}
+      ${renderSetupWizard(state)}
     </div>
   `;
 }

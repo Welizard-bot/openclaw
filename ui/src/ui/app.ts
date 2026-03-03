@@ -63,6 +63,13 @@ import {
   loadModelAuthStatus as loadModelAuthStatusInternal,
   promoteModelAuthProfile as promoteModelAuthProfileInternal,
 } from "./controllers/model-auth.ts";
+import {
+  cancelSetupWizard as cancelSetupWizardInternal,
+  dismissSetupWizard as dismissSetupWizardInternal,
+  startSetupWizard as startSetupWizardInternal,
+  submitSetupWizard as submitSetupWizardInternal,
+  updateSetupWizardDraft as updateSetupWizardDraftInternal,
+} from "./controllers/setup-wizard.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
 import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
@@ -88,6 +95,7 @@ import type {
   NostrProfile,
   StatusSummary,
   ToolsCatalogResult,
+  WizardStep,
 } from "./types.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 import { generateUUID } from "./uuid.ts";
@@ -232,6 +240,15 @@ export class OpenClawApp extends LitElement {
   @state() modelAuthBusyKey: string | null = null;
   @state() modelAuthError: string | null = null;
   @state() modelAuthStatus: ModelsAuthStatusResult | null = null;
+  @state() wizardOpen = false;
+  @state() wizardLoading = false;
+  @state() wizardBusy = false;
+  @state() wizardMode: "local" | "remote" = "local";
+  @state() wizardSessionId: string | null = null;
+  @state() wizardStatus: "running" | "done" | "cancelled" | "error" | null = null;
+  @state() wizardError: string | null = null;
+  @state() wizardStep: WizardStep | null = null;
+  @state() wizardDraftValue: unknown = null;
   @state() agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" =
     "overview";
   @state() agentFilesLoading = false;
@@ -495,6 +512,26 @@ export class OpenClawApp extends LitElement {
 
   async handleClearModelAuthCooldown(profileId: string) {
     await clearModelAuthCooldownInternal(this, profileId);
+  }
+
+  async handleStartSetupWizard(mode: "local" | "remote") {
+    await startSetupWizardInternal(this, mode);
+  }
+
+  async handleSubmitSetupWizard() {
+    await submitSetupWizardInternal(this);
+  }
+
+  async handleCancelSetupWizard() {
+    await cancelSetupWizardInternal(this);
+  }
+
+  handleDismissSetupWizard() {
+    dismissSetupWizardInternal(this);
+  }
+
+  handleUpdateSetupWizardDraft(value: unknown) {
+    updateSetupWizardDraftInternal(this, value);
   }
 
   async loadCron() {
