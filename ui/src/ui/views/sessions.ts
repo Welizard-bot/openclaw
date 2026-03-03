@@ -1,5 +1,6 @@
 import { html, nothing } from "lit";
 import { formatRelativeTimestamp } from "../format.ts";
+import { resolveModelRef } from "../model-utils.ts";
 import { pathForTab } from "../navigation.ts";
 import { formatSessionTokens } from "../presenter.ts";
 import type { GatewaySessionRow, SessionsListResult } from "../types.ts";
@@ -27,9 +28,11 @@ export type SessionsProps = {
       thinkingLevel?: string | null;
       verboseLevel?: string | null;
       reasoningLevel?: string | null;
+      model?: string | null;
     },
   ) => void;
   onDelete: (key: string) => void;
+  modelSuggestions: string[];
 };
 
 const THINK_LEVELS = ["", "off", "minimal", "low", "medium", "high", "xhigh"] as const;
@@ -41,6 +44,16 @@ const VERBOSE_LEVELS = [
   { value: "full", label: "full" },
 ] as const;
 const REASONING_LEVELS = ["", "off", "on", "stream"] as const;
+
+function renderSuggestionList(id: string, options: string[]) {
+  const clean = Array.from(new Set(options.map((option) => option.trim()).filter(Boolean)));
+  if (clean.length === 0) {
+    return nothing;
+  }
+  return html`<datalist id=${id}>
+    ${clean.map((value) => html`<option value=${value}></option>`)}
+  </datalist>`;
+}
 
 function normalizeProviderId(provider?: string | null): string {
   if (!provider) {
@@ -109,6 +122,10 @@ function resolveThinkLevelPatchValue(value: string, isBinary: boolean): string |
 
 export function renderSessions(props: SessionsProps) {
   const rows = props.result?.sessions ?? [];
+  const defaultModelRef = resolveModelRef(
+    props.result?.defaults.modelProvider,
+    props.result?.defaults.model,
+  );
   return html`
     <section class="card">
       <div class="row" style="justify-content: space-between;">
@@ -195,6 +212,7 @@ export function renderSessions(props: SessionsProps) {
           <div>Kind</div>
           <div>Updated</div>
           <div>Tokens</div>
+          <div>Model</div>
           <div>Thinking</div>
           <div>Verbose</div>
           <div>Reasoning</div>
@@ -206,10 +224,18 @@ export function renderSessions(props: SessionsProps) {
                 <div class="muted">No sessions found.</div>
               `
             : rows.map((row) =>
-                renderRow(row, props.basePath, props.onPatch, props.onDelete, props.loading),
+                renderRow(
+                  row,
+                  props.basePath,
+                  props.onPatch,
+                  props.onDelete,
+                  props.loading,
+                  defaultModelRef,
+                ),
               )
         }
       </div>
+      ${renderSuggestionList("sessions-model-suggestions", props.modelSuggestions)}
     </section>
   `;
 }
@@ -220,6 +246,7 @@ function renderRow(
   onPatch: SessionsProps["onPatch"],
   onDelete: SessionsProps["onDelete"],
   disabled: boolean,
+  defaultModelRef: string,
 ) {
   const updated = row.updatedAt ? formatRelativeTimestamp(row.updatedAt) : "n/a";
   const rawThinking = row.thinkingLevel ?? "";
@@ -235,6 +262,8 @@ function renderRow(
       ? row.displayName.trim()
       : null;
   const label = typeof row.label === "string" ? row.label.trim() : "";
+  const currentModelRef = resolveModelRef(row.modelProvider, row.model);
+  const overrideModelRef = resolveModelRef(row.providerOverride, row.modelOverride);
   const showDisplayName = Boolean(displayName && displayName !== row.key && displayName !== label);
   const canLink = row.kind !== "global";
   const chatUrl = canLink
@@ -261,6 +290,37 @@ function renderRow(
       <div>${row.kind}</div>
       <div>${updated}</div>
       <div>${formatSessionTokens(row)}</div>
+      <div>
+        <div class="session-model-control">
+          <input
+            .value=${overrideModelRef}
+            list="sessions-model-suggestions"
+            ?disabled=${disabled}
+            placeholder=${defaultModelRef || "provider/model"}
+            title=${currentModelRef || defaultModelRef || "Gateway default"}
+            @change=${(e: Event) => {
+              const value = (e.target as HTMLInputElement).value.trim();
+              onPatch(row.key, { model: value || null });
+            }}
+          />
+          <button
+            class="btn btn--sm"
+            ?disabled=${disabled || !overrideModelRef}
+            @click=${() => onPatch(row.key, { model: null })}
+          >
+            Default
+          </button>
+        </div>
+        <div class="muted session-model-meta">
+          ${overrideModelRef
+            ? `Override active · ${currentModelRef || overrideModelRef}`
+            : currentModelRef
+              ? `Active · ${currentModelRef}`
+              : defaultModelRef
+                ? `Default · ${defaultModelRef}`
+                : "Gateway default"}
+        </div>
+      </div>
       <div>
         <select
           ?disabled=${disabled}

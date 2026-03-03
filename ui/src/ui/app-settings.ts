@@ -22,6 +22,7 @@ import { loadDebug } from "./controllers/debug.ts";
 import { loadDevices } from "./controllers/devices.ts";
 import { loadExecApprovals } from "./controllers/exec-approvals.ts";
 import { loadLogs } from "./controllers/logs.ts";
+import { loadAvailableModels } from "./controllers/model-catalog.ts";
 import { loadModelAuthStatus } from "./controllers/model-auth.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
@@ -195,7 +196,10 @@ export async function refreshActiveTab(host: SettingsHost) {
     await loadPresence(host as unknown as OpenClawApp);
   }
   if (host.tab === "sessions") {
-    await loadSessions(host as unknown as OpenClawApp);
+    await Promise.all([
+      loadSessions(host as unknown as OpenClawApp),
+      loadAvailableModels(host as unknown as OpenClawApp),
+    ]);
   }
   if (host.tab === "cron") {
     await loadCron(host);
@@ -233,7 +237,11 @@ export async function refreshActiveTab(host: SettingsHost) {
     await loadExecApprovals(host as unknown as OpenClawApp);
   }
   if (host.tab === "chat") {
-    await refreshChat(host as unknown as Parameters<typeof refreshChat>[0]);
+    await Promise.all([
+      refreshChat(host as unknown as Parameters<typeof refreshChat>[0]),
+      loadSessions(host as unknown as OpenClawApp),
+      loadAvailableModels(host as unknown as OpenClawApp),
+    ]);
     scheduleChatScroll(
       host as unknown as Parameters<typeof scheduleChatScroll>[0],
       !host.chatHasAutoScrolled,
@@ -414,6 +422,7 @@ export async function loadOverview(host: SettingsHost) {
     loadChannels(host as unknown as OpenClawApp, false),
     loadPresence(host as unknown as OpenClawApp),
     loadSessions(host as unknown as OpenClawApp),
+    loadAvailableModels(host as unknown as OpenClawApp),
     loadCronStatus(host as unknown as OpenClawApp),
     loadModelAuthStatus(host as unknown as OpenClawApp),
     loadDebug(host as unknown as OpenClawApp),

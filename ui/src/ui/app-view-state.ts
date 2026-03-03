@@ -30,6 +30,7 @@ import type {
   HealthSnapshot,
   LogEntry,
   LogLevel,
+  ModelCatalogEntry,
   ModelsAuthStatusResult,
   NostrProfile,
   PresenceEntry,
@@ -143,6 +144,8 @@ export type AppViewState = {
   toolsCatalogLoading: boolean;
   toolsCatalogError: string | null;
   toolsCatalogResult: ToolsCatalogResult | null;
+  availableModelsLoading: boolean;
+  availableModels: ModelCatalogEntry[];
   modelAuthLoading: boolean;
   modelAuthBusyKey: string | null;
   modelAuthError: string | null;

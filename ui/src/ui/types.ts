@@ -322,6 +322,7 @@ export type PresenceEntry = {
 };
 
 export type GatewaySessionsDefaults = {
+  modelProvider: string | null;
   model: string | null;
   contextTokens: number | null;
 };
@@ -380,6 +381,7 @@ export type ModelsAuthProviderStatus =
   import("../../../src/commands/models/auth-status.js").ModelsAuthProviderStatus;
 export type ModelsAuthProfileStatus =
   import("../../../src/commands/models/auth-status.js").ModelsAuthProfileStatus;
+export type ModelCatalogEntry = import("../../../src/agents/model-catalog.js").ModelCatalogEntry;
 export type WizardStep = import("../../../src/gateway/protocol/schema/types.js").WizardStep;
 export type WizardNextResult = import("../../../src/gateway/protocol/schema/types.js").WizardNextResult;
 export type WizardStartResult =
@@ -440,6 +442,8 @@ export type GatewaySessionRow = {
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
+  modelOverride?: string;
+  providerOverride?: string;
   model?: string;
   modelProvider?: string;
   contextTokens?: number;

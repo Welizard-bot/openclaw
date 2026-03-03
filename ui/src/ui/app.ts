@@ -63,6 +63,7 @@ import {
   loadModelAuthStatus as loadModelAuthStatusInternal,
   promoteModelAuthProfile as promoteModelAuthProfileInternal,
 } from "./controllers/model-auth.ts";
+import { loadAvailableModels as loadAvailableModelsInternal } from "./controllers/model-catalog.ts";
 import {
   cancelSetupWizard as cancelSetupWizardInternal,
   dismissSetupWizard as dismissSetupWizardInternal,
@@ -87,6 +88,7 @@ import type {
   HealthSnapshot,
   LogEntry,
   LogLevel,
+  ModelCatalogEntry,
   ModelsAuthStatusResult,
   PresenceEntry,
   ChannelsStatusSnapshot,
@@ -236,6 +238,8 @@ export class OpenClawApp extends LitElement {
   @state() toolsCatalogLoading = false;
   @state() toolsCatalogError: string | null = null;
   @state() toolsCatalogResult: ToolsCatalogResult | null = null;
+  @state() availableModelsLoading = false;
+  @state() availableModels: ModelCatalogEntry[] = [];
   @state() modelAuthLoading = false;
   @state() modelAuthBusyKey: string | null = null;
   @state() modelAuthError: string | null = null;
@@ -500,6 +504,10 @@ export class OpenClawApp extends LitElement {
 
   async handleLoadModelAuthStatus() {
     await loadModelAuthStatusInternal(this);
+  }
+
+  async loadAvailableModels() {
+    await loadAvailableModelsInternal(this);
   }
 
   async handlePromoteModelAuthProfile(provider: string, profileId: string) {

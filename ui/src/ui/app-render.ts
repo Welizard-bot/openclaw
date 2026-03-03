@@ -64,6 +64,7 @@ import {
 } from "./controllers/skills.ts";
 import { buildExternalLinkRel, EXTERNAL_LINK_TARGET } from "./external-link.ts";
 import { icons } from "./icons.ts";
+import { modelCatalogEntryRef, resolveModelRef } from "./model-utils.ts";
 import { normalizeBasePath, TAB_GROUPS, subtitleForTab, titleForTab } from "./navigation.ts";
 import { renderAgents } from "./views/agents.ts";
 import { renderChannels } from "./views/channels.ts";
@@ -179,6 +180,7 @@ export function renderApp(state: AppViewState) {
     new Set(
       [
         ...state.cronModelSuggestions,
+        ...state.availableModels.map((entry) => modelCatalogEntryRef(entry)),
         ...state.cronJobs
           .map((job) => {
             if (job.payload.kind !== "agentTurn" || typeof job.payload.model !== "string") {
@@ -187,6 +189,21 @@ export function renderApp(state: AppViewState) {
             return job.payload.model.trim();
           })
           .filter(Boolean),
+      ].filter(Boolean),
+    ),
+  ).toSorted((a, b) => a.localeCompare(b));
+  const sessionModelSuggestions = Array.from(
+    new Set(
+      [
+        resolveModelRef(
+          state.sessionsResult?.defaults.modelProvider,
+          state.sessionsResult?.defaults.model,
+        ),
+        ...(state.sessionsResult?.sessions ?? []).flatMap((row) => [
+          resolveModelRef(row.modelProvider, row.model),
+          resolveModelRef(row.providerOverride, row.modelOverride),
+        ]),
+        ...state.availableModels.map((entry) => modelCatalogEntryRef(entry)),
       ].filter(Boolean),
     ),
   ).toSorted((a, b) => a.localeCompare(b));
@@ -445,6 +462,7 @@ export function renderApp(state: AppViewState) {
                 onRefresh: () => loadSessions(state),
                 onPatch: (key, patch) => patchSession(state, key, patch),
                 onDelete: (key) => deleteSessionAndRefresh(state, key),
+                modelSuggestions: sessionModelSuggestions,
               })
             : nothing
         }

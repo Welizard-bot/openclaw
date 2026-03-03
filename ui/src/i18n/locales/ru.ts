@@ -195,6 +195,15 @@ export const ru: TranslationMap = {
       error: "Ошибка",
     },
   },
+  sessions: {
+    model: "Модель",
+    modelPlaceholder: "provider/model",
+    activeModel: "Активная модель: {model}",
+    defaultModel: "По умолчанию: {model}",
+    inheritedModel: "Используется модель шлюза по умолчанию.",
+    overrideModel: "Включён override для сессии",
+    useDefault: "Использовать default",
+  },
   languages: {
     en: "English",
     zhCN: "简体中文 (упрощённый китайский)",

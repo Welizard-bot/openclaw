@@ -1525,7 +1525,7 @@
 .table-head,
 .table-row {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 0.8fr 0.7fr 0.8fr 0.8fr 0.8fr 0.8fr 0.6fr;
+  grid-template-columns: 1.25fr 0.9fr 0.65fr 0.7fr 0.7fr 1.35fr 0.75fr 0.75fr 0.75fr 0.55fr;
   gap: 12px;
   align-items: center;
 }
@@ -1573,6 +1573,23 @@
 
 .session-key-display-name {
   font-size: 11px;
+}
+
+.session-model-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.session-model-control input {
+  min-width: 0;
+}
+
+.session-model-meta {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 /* ===========================================

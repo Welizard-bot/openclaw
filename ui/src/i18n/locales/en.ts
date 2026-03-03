@@ -191,6 +191,15 @@ export const en: TranslationMap = {
       error: "Error",
     },
   },
+  sessions: {
+    model: "Model",
+    modelPlaceholder: "provider/model",
+    activeModel: "Active: {model}",
+    defaultModel: "Default: {model}",
+    inheritedModel: "Inherits the gateway default model.",
+    overrideModel: "Session override active",
+    useDefault: "Use default",
+  },
   languages: {
     en: "English",
     zhCN: "简体中文 (Simplified Chinese)",

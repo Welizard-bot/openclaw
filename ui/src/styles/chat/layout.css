@@ -336,6 +336,21 @@
   max-width: 300px;
 }
 
+.chat-controls__model {
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.chat-controls__model input {
+  min-width: 0;
+}
+
+.chat-controls__model-meta {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .chat-controls__thinking {
   display: flex;
   align-items: center;
@@ -477,5 +492,10 @@
 
   .chat-controls__session {
     min-width: 120px;
+  }
+
+  .chat-controls__model {
+    min-width: 100%;
+    max-width: none;
   }
 }
