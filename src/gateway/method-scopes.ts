@@ -57,6 +57,7 @@ const METHOD_SCOPE_GROUPS: Record<OperatorScope, readonly string[]> = {
     "tts.status",
     "tts.providers",
     "models.list",
+    "models.auth.status",
     "tools.catalog",
     "agents.list",
     "agent.identity.get",
@@ -97,6 +98,9 @@ const METHOD_SCOPE_GROUPS: Record<OperatorScope, readonly string[]> = {
     "chat.send",
     "chat.abort",
     "browser.request",
+    "models.auth.promote",
+    "models.auth.order.clear",
+    "models.auth.cooldown.clear",
     "push.test",
   ],
   [ADMIN_SCOPE]: [

@@ -57,6 +57,12 @@ import type { CronFieldErrors } from "./controllers/cron.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
+import {
+  clearModelAuthCooldown as clearModelAuthCooldownInternal,
+  clearModelAuthOrder as clearModelAuthOrderInternal,
+  loadModelAuthStatus as loadModelAuthStatusInternal,
+  promoteModelAuthProfile as promoteModelAuthProfileInternal,
+} from "./controllers/model-auth.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
 import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
@@ -74,13 +80,14 @@ import type {
   HealthSnapshot,
   LogEntry,
   LogLevel,
+  ModelsAuthStatusResult,
   PresenceEntry,
   ChannelsStatusSnapshot,
   SessionsListResult,
   SkillStatusReport,
-  ToolsCatalogResult,
-  StatusSummary,
   NostrProfile,
+  StatusSummary,
+  ToolsCatalogResult,
 } from "./types.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 import { generateUUID } from "./uuid.ts";
@@ -221,6 +228,10 @@ export class OpenClawApp extends LitElement {
   @state() toolsCatalogLoading = false;
   @state() toolsCatalogError: string | null = null;
   @state() toolsCatalogResult: ToolsCatalogResult | null = null;
+  @state() modelAuthLoading = false;
+  @state() modelAuthBusyKey: string | null = null;
+  @state() modelAuthError: string | null = null;
+  @state() modelAuthStatus: ModelsAuthStatusResult | null = null;
   @state() agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" =
     "overview";
   @state() agentFilesLoading = false;
@@ -468,6 +479,22 @@ export class OpenClawApp extends LitElement {
 
   async loadOverview() {
     await loadOverviewInternal(this as unknown as Parameters<typeof loadOverviewInternal>[0]);
+  }
+
+  async handleLoadModelAuthStatus() {
+    await loadModelAuthStatusInternal(this);
+  }
+
+  async handlePromoteModelAuthProfile(provider: string, profileId: string) {
+    await promoteModelAuthProfileInternal(this, provider, profileId);
+  }
+
+  async handleClearModelAuthOrder(provider: string) {
+    await clearModelAuthOrderInternal(this, provider);
+  }
+
+  async handleClearModelAuthCooldown(profileId: string) {
+    await clearModelAuthCooldownInternal(this, profileId);
   }
 
   async loadCron() {

@@ -173,6 +173,38 @@ export const ModelsListResultSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const ModelsAuthStatusParamsSchema = Type.Object(
+  {
+    agentId: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
+export const ModelsAuthPromoteParamsSchema = Type.Object(
+  {
+    provider: NonEmptyString,
+    profileId: NonEmptyString,
+    agentId: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
+export const ModelsAuthOrderClearParamsSchema = Type.Object(
+  {
+    provider: NonEmptyString,
+    agentId: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
+export const ModelsAuthCooldownClearParamsSchema = Type.Object(
+  {
+    profileId: NonEmptyString,
+    agentId: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
 export const SkillsStatusParamsSchema = Type.Object(
   {
     agentId: Type.Optional(NonEmptyString),

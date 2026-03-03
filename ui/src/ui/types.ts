@@ -374,6 +374,13 @@ export type ToolsCatalogResult = {
   groups: ToolCatalogGroup[];
 };
 
+export type ModelsAuthStatusResult =
+  import("../../../src/commands/models/auth-status.js").ModelsAuthStatusResult;
+export type ModelsAuthProviderStatus =
+  import("../../../src/commands/models/auth-status.js").ModelsAuthProviderStatus;
+export type ModelsAuthProfileStatus =
+  import("../../../src/commands/models/auth-status.js").ModelsAuthProfileStatus;
+
 export type AgentIdentityResult = {
   agentId: string;
   name: string;

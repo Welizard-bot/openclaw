@@ -132,6 +132,14 @@ import {
   LogsTailResultSchema,
   type ModelsListParams,
   ModelsListParamsSchema,
+  type ModelsAuthCooldownClearParams,
+  ModelsAuthCooldownClearParamsSchema,
+  type ModelsAuthOrderClearParams,
+  ModelsAuthOrderClearParamsSchema,
+  type ModelsAuthPromoteParams,
+  ModelsAuthPromoteParamsSchema,
+  type ModelsAuthStatusParams,
+  ModelsAuthStatusParamsSchema,
   type NodeDescribeParams,
   NodeDescribeParamsSchema,
   type NodeEventParams,
@@ -321,6 +329,14 @@ export const validateChannelsLogoutParams = ajv.compile<ChannelsLogoutParams>(
   ChannelsLogoutParamsSchema,
 );
 export const validateModelsListParams = ajv.compile<ModelsListParams>(ModelsListParamsSchema);
+export const validateModelsAuthStatusParams =
+  ajv.compile<ModelsAuthStatusParams>(ModelsAuthStatusParamsSchema);
+export const validateModelsAuthPromoteParams =
+  ajv.compile<ModelsAuthPromoteParams>(ModelsAuthPromoteParamsSchema);
+export const validateModelsAuthOrderClearParams =
+  ajv.compile<ModelsAuthOrderClearParams>(ModelsAuthOrderClearParamsSchema);
+export const validateModelsAuthCooldownClearParams =
+  ajv.compile<ModelsAuthCooldownClearParams>(ModelsAuthCooldownClearParamsSchema);
 export const validateSkillsStatusParams = ajv.compile<SkillsStatusParams>(SkillsStatusParamsSchema);
 export const validateToolsCatalogParams = ajv.compile<ToolsCatalogParams>(ToolsCatalogParamsSchema);
 export const validateSkillsBinsParams = ajv.compile<SkillsBinsParams>(SkillsBinsParamsSchema);

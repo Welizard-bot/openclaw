@@ -30,6 +30,7 @@ import type {
   HealthSnapshot,
   LogEntry,
   LogLevel,
+  ModelsAuthStatusResult,
   NostrProfile,
   PresenceEntry,
   SessionsUsageResult,
@@ -141,6 +142,10 @@ export type AppViewState = {
   toolsCatalogLoading: boolean;
   toolsCatalogError: string | null;
   toolsCatalogResult: ToolsCatalogResult | null;
+  modelAuthLoading: boolean;
+  modelAuthBusyKey: string | null;
+  modelAuthError: string | null;
+  modelAuthStatus: ModelsAuthStatusResult | null;
   agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron";
   agentFilesLoading: boolean;
   agentFilesError: string | null;
@@ -303,6 +308,10 @@ export type AppViewState = {
   handleSessionsPatch: (key: string, patch: unknown) => Promise<void>;
   handleLoadNodes: () => Promise<void>;
   handleLoadPresence: () => Promise<void>;
+  handleLoadModelAuthStatus: () => Promise<void>;
+  handlePromoteModelAuthProfile: (provider: string, profileId: string) => Promise<void>;
+  handleClearModelAuthOrder: (provider: string) => Promise<void>;
+  handleClearModelAuthCooldown: (profileId: string) => Promise<void>;
   handleLoadSkills: () => Promise<void>;
   handleLoadDebug: () => Promise<void>;
   handleLoadLogs: () => Promise<void>;

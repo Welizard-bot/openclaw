@@ -204,6 +204,117 @@
 }
 
 /* ===========================================
+   Overview Account Switcher
+   =========================================== */
+
+.overview-auth-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.overview-auth-provider {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 72%),
+    var(--bg-elevated);
+  box-shadow: inset 0 1px 0 var(--card-highlight);
+}
+
+.overview-auth-provider--in-use {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.overview-auth-provider__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.overview-auth-provider__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.overview-auth-provider__meta {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.overview-auth-provider__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.overview-auth-profile-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.overview-auth-profile {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.overview-auth-profile--current {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.overview-auth-profile--blocked {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.overview-auth-profile__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.overview-auth-profile__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.overview-auth-profile__id {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.overview-auth-profile__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* ===========================================
    Labels & Pills
    =========================================== */
 

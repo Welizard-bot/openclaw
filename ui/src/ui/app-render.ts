@@ -339,6 +339,10 @@ export function renderApp(state: AppViewState) {
                 cronEnabled: state.cronStatus?.enabled ?? null,
                 cronNext,
                 lastChannelsRefresh: state.channelsLastSuccess,
+                modelAuthLoading: state.modelAuthLoading,
+                modelAuthBusyKey: state.modelAuthBusyKey,
+                modelAuthError: state.modelAuthError,
+                modelAuthStatus: state.modelAuthStatus,
                 onSettingsChange: (next) => state.applySettings(next),
                 onPasswordChange: (next) => (state.password = next),
                 onSessionKeyChange: (next) => {
@@ -354,6 +358,13 @@ export function renderApp(state: AppViewState) {
                 },
                 onConnect: () => state.connect(),
                 onRefresh: () => state.loadOverview(),
+                onModelAuthRefresh: () => void state.handleLoadModelAuthStatus(),
+                onPromoteProfile: (provider, profileId) =>
+                  void state.handlePromoteModelAuthProfile(provider, profileId),
+                onClearProviderOrder: (provider) =>
+                  void state.handleClearModelAuthOrder(provider),
+                onClearProfileCooldown: (profileId) =>
+                  void state.handleClearModelAuthCooldown(profileId),
               })
             : nothing
         }
