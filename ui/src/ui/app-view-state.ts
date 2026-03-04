@@ -30,6 +30,7 @@ import type {
   SkillStatusReport,
   ToolsCatalogResult,
   StatusSummary,
+  WizardStep,
 } from "./types.ts";
 import type { ChatAttachment, ChatQueueItem } from "./ui-types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
@@ -157,6 +158,15 @@ export type AppViewState = {
   sessionsHideCron: boolean;
   availableModelsLoading: boolean;
   availableModels: import("./types.ts").ModelCatalogEntry[];
+  wizardOpen: boolean;
+  wizardLoading: boolean;
+  wizardBusy: boolean;
+  wizardMode: "local" | "remote";
+  wizardSessionId: string | null;
+  wizardStatus: "running" | "done" | "cancelled" | "error" | null;
+  wizardError: string | null;
+  wizardStep: WizardStep | null;
+  wizardDraftValue: unknown;
   usageLoading: boolean;
   usageResult: SessionsUsageResult | null;
   usageCostSummary: CostUsageSummary | null;
@@ -303,6 +313,11 @@ export type AppViewState = {
     handleSessionsPatch: (key: string, patch: unknown) => Promise<void>;
     handleLoadNodes: () => Promise<void>;
     handleLoadPresence: () => Promise<void>;
+    handleStartSetupWizard: (mode: "local" | "remote") => Promise<void>;
+    handleSubmitSetupWizard: () => Promise<void>;
+    handleCancelSetupWizard: () => Promise<void>;
+    handleDismissSetupWizard: () => void;
+    handleUpdateSetupWizardDraft: (value: unknown) => void;
     handleLoadSkills: () => Promise<void>;
     handleLoadDebug: () => Promise<void>;
     handleLoadLogs: () => Promise<void>;

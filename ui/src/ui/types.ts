@@ -8,6 +8,10 @@ import type {
 } from "../../../src/shared/session-types.js";
 export type { ConfigUiHints } from "../../../src/shared/config-ui-hints-types.js";
 export type ModelCatalogEntry = import("../../../src/gateway/protocol/schema/types.js").ModelChoice;
+export type WizardStep = import("../../../src/gateway/protocol/schema/types.js").WizardStep;
+export type WizardNextResult = import("../../../src/gateway/protocol/schema/types.js").WizardNextResult;
+export type WizardStartResult =
+  import("../../../src/gateway/protocol/schema/types.js").WizardStartResult;
 
 export type ChannelsStatusSnapshot = {
   ts: number;

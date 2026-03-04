@@ -57,6 +57,13 @@ import type { CronFieldErrors } from "./controllers/cron.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
+import {
+  cancelSetupWizard as cancelSetupWizardInternal,
+  dismissSetupWizard as dismissSetupWizardInternal,
+  startSetupWizard as startSetupWizardInternal,
+  submitSetupWizard as submitSetupWizardInternal,
+  updateSetupWizardDraft as updateSetupWizardDraftInternal,
+} from "./controllers/setup-wizard.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
 import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
@@ -73,15 +80,16 @@ import type {
   CronStatus,
   HealthSnapshot,
   LogEntry,
-    LogLevel,
-    PresenceEntry,
-    ChannelsStatusSnapshot,
-    SessionsListResult,
-    SkillStatusReport,
-    ToolsCatalogResult,
-    ModelCatalogEntry,
-    StatusSummary,
-    NostrProfile,
+  LogLevel,
+  PresenceEntry,
+  ChannelsStatusSnapshot,
+  SessionsListResult,
+  SkillStatusReport,
+  ToolsCatalogResult,
+  ModelCatalogEntry,
+  StatusSummary,
+  NostrProfile,
+  WizardStep,
 } from "./types.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 import { generateUUID } from "./uuid.ts";
@@ -249,6 +257,15 @@ export class OpenClawApp extends LitElement {
   @state() sessionsHideCron = true;
   @state() availableModelsLoading = false;
   @state() availableModels: ModelCatalogEntry[] = [];
+  @state() wizardOpen = false;
+  @state() wizardLoading = false;
+  @state() wizardBusy = false;
+  @state() wizardMode: "local" | "remote" = "local";
+  @state() wizardSessionId: string | null = null;
+  @state() wizardStatus: "running" | "done" | "cancelled" | "error" | null = null;
+  @state() wizardError: string | null = null;
+  @state() wizardStep: WizardStep | null = null;
+  @state() wizardDraftValue: unknown = null;
 
   @state() usageLoading = false;
   @state() usageResult: import("./types.js").SessionsUsageResult | null = null;
@@ -476,6 +493,26 @@ export class OpenClawApp extends LitElement {
 
   async loadOverview() {
     await loadOverviewInternal(this as unknown as Parameters<typeof loadOverviewInternal>[0]);
+  }
+
+  async handleStartSetupWizard(mode: "local" | "remote") {
+    await startSetupWizardInternal(this, mode);
+  }
+
+  async handleSubmitSetupWizard() {
+    await submitSetupWizardInternal(this);
+  }
+
+  async handleCancelSetupWizard() {
+    await cancelSetupWizardInternal(this);
+  }
+
+  handleDismissSetupWizard() {
+    dismissSetupWizardInternal(this);
+  }
+
+  handleUpdateSetupWizardDraft(value: unknown) {
+    updateSetupWizardDraftInternal(this, value);
   }
 
   async loadCron() {

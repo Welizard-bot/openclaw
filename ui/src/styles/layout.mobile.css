@@ -187,6 +187,15 @@
     font-size: 12px;
   }
 
+  .wizard-card {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .wizard-option {
+    padding: 10px 12px;
+  }
+
   /* Pills */
   .pill {
     padding: 4px 10px;

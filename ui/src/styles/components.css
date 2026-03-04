@@ -2226,6 +2226,79 @@
   gap: 8px;
 }
 
+.wizard-card {
+  width: min(720px, 100%);
+}
+
+.wizard-step {
+  margin-top: 14px;
+}
+
+.wizard-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.wizard-step-message {
+  margin-top: 10px;
+  color: var(--text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.wizard-option-list {
+  display: grid;
+  gap: 10px;
+}
+
+.wizard-option {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    background var(--duration-fast) ease;
+}
+
+.wizard-option:hover {
+  border-color: var(--border-strong);
+}
+
+.wizard-option.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--secondary));
+  box-shadow: var(--focus-ring);
+}
+
+.wizard-option__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.wizard-option__hint {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.wizard-empty {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--secondary);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 /* ===========================================
    Agents
    =========================================== */
