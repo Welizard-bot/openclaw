@@ -167,6 +167,30 @@
     gap: 8px;
   }
 
+  .overview-auth-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .overview-auth-provider {
+    padding: 12px;
+  }
+
+  .overview-auth-provider__header,
+  .overview-auth-profile {
+    flex-direction: column;
+  }
+
+  .overview-auth-provider__actions,
+  .overview-auth-profile__actions {
+    width: 100%;
+  }
+
+  .overview-auth-profile__actions .btn,
+  .overview-auth-provider__actions .btn {
+    width: 100%;
+  }
+
   /* Forms */
   .form-grid {
     grid-template-columns: 1fr;

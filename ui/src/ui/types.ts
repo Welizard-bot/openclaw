@@ -8,6 +8,12 @@ import type {
 } from "../../../src/shared/session-types.js";
 export type { ConfigUiHints } from "../../../src/shared/config-ui-hints-types.js";
 export type ModelCatalogEntry = import("../../../src/gateway/protocol/schema/types.js").ModelChoice;
+export type ModelsAuthStatusResult =
+  import("../../../src/commands/models/auth-status.js").ModelsAuthStatusResult;
+export type ModelsAuthProviderStatus =
+  import("../../../src/commands/models/auth-status.js").ModelsAuthProviderStatus;
+export type ModelsAuthProfileStatus =
+  import("../../../src/commands/models/auth-status.js").ModelsAuthProfileStatus;
 export type WizardStep = import("../../../src/gateway/protocol/schema/types.js").WizardStep;
 export type WizardNextResult = import("../../../src/gateway/protocol/schema/types.js").WizardNextResult;
 export type WizardStartResult =

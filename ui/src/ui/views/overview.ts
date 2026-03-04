@@ -6,6 +6,11 @@ import { formatRelativeTimestamp, formatDurationHuman } from "../format.ts";
 import type { GatewayHelloOk } from "../gateway.ts";
 import { formatNextRun } from "../presenter.ts";
 import type { UiSettings } from "../storage.ts";
+import type {
+  ModelsAuthProfileStatus,
+  ModelsAuthProviderStatus,
+  ModelsAuthStatusResult,
+} from "../types.ts";
 import { shouldShowPairingHint } from "./overview-hints.ts";
 
 export type OverviewProps = {
@@ -20,6 +25,10 @@ export type OverviewProps = {
   cronEnabled: boolean | null;
   cronNext: number | null;
   lastChannelsRefresh: number | null;
+  modelAuthLoading: boolean;
+  modelAuthBusyKey: string | null;
+  modelAuthError: string | null;
+  modelAuthStatus: ModelsAuthStatusResult | null;
   wizardOpen: boolean;
   wizardLoading: boolean;
   wizardBusy: boolean;
@@ -28,8 +37,193 @@ export type OverviewProps = {
   onSessionKeyChange: (next: string) => void;
   onConnect: () => void;
   onRefresh: () => void;
+  onModelAuthRefresh: () => void;
+  onPromoteProfile: (provider: string, profileId: string) => void;
+  onClearProviderOrder: (provider: string) => void;
+  onClearProfileCooldown: (profileId: string) => void;
   onStartWizard: (mode: "local" | "remote") => void;
 };
+
+function resolveAuthStatusChipClass(status: ModelsAuthProviderStatus["status"]) {
+  switch (status) {
+    case "ok":
+      return "chip chip-ok";
+    case "expiring":
+      return "chip chip-warn";
+    case "expired":
+    case "missing":
+      return "chip chip-danger";
+    default:
+      return "chip";
+  }
+}
+
+function formatOrderSource(source: ModelsAuthProviderStatus["orderSource"]) {
+  switch (source) {
+    case "stored":
+      return t("overview.accounts.orderStored");
+    case "config":
+      return t("overview.accounts.orderConfig");
+    default:
+      return t("overview.accounts.orderDerived");
+  }
+}
+
+function formatEffectiveSource(entry: ModelsAuthProviderStatus) {
+  const kind = entry.effective.kind;
+  if (kind === "profiles") {
+    return t("overview.accounts.sourceProfiles");
+  }
+  if (kind === "env") {
+    return t("overview.accounts.sourceEnv");
+  }
+  if (kind === "models.json") {
+    return "models.json";
+  }
+  return t("overview.accounts.sourceMissing");
+}
+
+function formatProfileType(type: ModelsAuthProfileStatus["type"]) {
+  if (type === "oauth") {
+    return t("overview.accounts.typeOauth");
+  }
+  if (type === "token") {
+    return t("overview.accounts.typeToken");
+  }
+  return t("overview.accounts.typeApiKey");
+}
+
+function formatProfileState(profile: ModelsAuthProfileStatus) {
+  if (profile.unusableKind === "disabled") {
+    const reason = profile.disabledReason ? ` · ${profile.disabledReason}` : "";
+    const remaining = profile.unusableRemainingMs
+      ? ` · ${formatDurationHuman(profile.unusableRemainingMs)}`
+      : "";
+    return `${t("overview.accounts.disabled")}${reason}${remaining}`;
+  }
+  if (profile.unusableKind === "cooldown") {
+    const remaining = profile.unusableRemainingMs
+      ? ` · ${formatDurationHuman(profile.unusableRemainingMs)}`
+      : "";
+    return `${t("overview.accounts.cooldown")}${remaining}`;
+  }
+  if (profile.healthStatus === "expiring" && profile.remainingMs != null) {
+    return `${t("overview.accounts.expiring")} · ${formatDurationHuman(profile.remainingMs)}`;
+  }
+  if (profile.healthStatus === "expired") {
+    return t("overview.accounts.expired");
+  }
+  return t("overview.accounts.available");
+}
+
+function renderProfileRow(
+  provider: ModelsAuthProviderStatus,
+  profile: ModelsAuthProfileStatus,
+  props: OverviewProps,
+) {
+  const isBusy =
+    props.modelAuthBusyKey != null &&
+    (props.modelAuthBusyKey === `promote:${provider.provider}:${profile.profileId}` ||
+      props.modelAuthBusyKey === `clear-cooldown:${profile.profileId}`);
+  return html`
+    <div
+      class="overview-auth-profile ${profile.isCurrent ? "overview-auth-profile--current" : ""} ${profile.unusableKind !== "available" ? "overview-auth-profile--blocked" : ""}"
+    >
+      <div class="overview-auth-profile__main">
+        <div class="overview-auth-profile__title">
+          <span>${profile.label}</span>
+          <span class="overview-auth-profile__id mono">${profile.profileId}</span>
+        </div>
+        <div class="chip-row" style="margin-top: 10px;">
+          <span class="chip">${formatProfileType(profile.type)}</span>
+          ${profile.isCurrent
+            ? html`<span class="chip chip-ok">${t("overview.accounts.current")}</span>`
+            : nothing}
+          ${profile.isLastGood
+            ? html`<span class="chip">${t("overview.accounts.lastGood")}</span>`
+            : nothing}
+          <span
+            class=${profile.unusableKind === "available"
+              ? "chip"
+              : profile.unusableKind === "cooldown"
+                ? "chip chip-warn"
+                : "chip chip-danger"}
+            >${formatProfileState(profile)}</span
+          >
+          <span class="chip"
+            >${t("overview.accounts.lastUsed")}: ${profile.lastUsed
+              ? formatRelativeTimestamp(profile.lastUsed)
+              : t("overview.accounts.neverUsed")}</span
+          >
+          ${typeof profile.errorCount === "number"
+            ? html`<span class="chip">${t("overview.accounts.errors")}: ${profile.errorCount}</span>`
+            : nothing}
+        </div>
+      </div>
+      <div class="overview-auth-profile__actions">
+        <button
+          class="btn btn--sm"
+          ?disabled=${Boolean(props.modelAuthBusyKey) || profile.isCurrent}
+          @click=${() => props.onPromoteProfile(provider.provider, profile.profileId)}
+        >
+          ${t("overview.accounts.makePrimary")}
+        </button>
+        ${profile.unusableKind !== "available"
+          ? html`<button
+              class="btn btn--sm"
+              ?disabled=${Boolean(props.modelAuthBusyKey) || isBusy}
+              @click=${() => props.onClearProfileCooldown(profile.profileId)}
+            >
+              ${t("overview.accounts.clearCooldown")}
+            </button>`
+          : nothing}
+      </div>
+    </div>
+  `;
+}
+
+function renderAuthProviderCard(entry: ModelsAuthProviderStatus, props: OverviewProps) {
+  const activeProfile =
+    entry.profiles.find((profile) => profile.profileId === entry.activeProfileId) ?? null;
+  return html`
+    <section class="overview-auth-provider ${entry.inUse ? "overview-auth-provider--in-use" : ""}">
+      <div class="overview-auth-provider__header">
+        <div>
+          <div class="overview-auth-provider__title">
+            <span class="mono">${entry.provider}</span>
+            ${entry.inUse ? html`<span class="chip chip-ok">${t("overview.accounts.inUse")}</span>` : nothing}
+            <span class=${resolveAuthStatusChipClass(entry.status)}>${t(`overview.accounts.status.${entry.status}`)}</span>
+          </div>
+          <div class="overview-auth-provider__meta">
+            ${t("overview.accounts.source")}: ${formatEffectiveSource(entry)}
+            <span class="muted"> · </span>
+            ${t("overview.accounts.order")}: ${formatOrderSource(entry.orderSource)}
+          </div>
+        </div>
+        <div class="overview-auth-provider__actions">
+          <button class="btn btn--sm" ?disabled=${Boolean(props.modelAuthBusyKey) || !entry.hasStoredOrderOverride} @click=${() => props.onClearProviderOrder(entry.provider)}>
+            ${t("overview.accounts.resetOrder")}
+          </button>
+        </div>
+      </div>
+
+      <div class="chip-row" style="margin-top: 12px;">
+        <span class="chip">${t("overview.accounts.countProfiles")}: ${entry.counts.total}</span>
+        <span class="chip">${t("overview.accounts.countAvailable")}: ${entry.counts.available}</span>
+        <span class="chip">${t("overview.accounts.countBlocked")}: ${entry.counts.unavailable}</span>
+        ${activeProfile
+          ? html`<span class="chip chip-ok">${t("overview.accounts.activeProfile")}: ${activeProfile.profileId}</span>`
+          : nothing}
+      </div>
+
+      ${entry.profiles.length === 0
+        ? html`<div class="callout info" style="margin-top: 14px;">${t("overview.accounts.noProfiles")}</div>`
+        : html`<div class="overview-auth-profile-list">
+            ${entry.profiles.map((profile) => renderProfileRow(entry, profile, props))}
+          </div>`}
+    </section>
+  `;
+}
 
 export function renderOverview(props: OverviewProps) {
   const snapshot = props.hello?.snapshot as
@@ -370,6 +564,43 @@ export function renderOverview(props: OverviewProps) {
       <div class="muted" style="margin-top: 12px;">
         ${t("overview.setup.hint")}
       </div>
+    </section>
+
+    <section class="card overview-auth" style="margin-top: 18px;">
+      <div class="row" style="justify-content: space-between; align-items: flex-start; gap: 16px;">
+        <div>
+          <div class="card-title">${t("overview.accounts.title")}</div>
+          <div class="card-sub">${t("overview.accounts.subtitle")}</div>
+        </div>
+        <div class="row" style="gap: 10px; align-items: center;">
+          ${props.modelAuthStatus
+            ? html`<span class="muted mono">${props.modelAuthStatus.authStorePath}</span>`
+            : nothing}
+          <button class="btn btn--sm" ?disabled=${props.modelAuthLoading || Boolean(props.modelAuthBusyKey)} @click=${() => props.onModelAuthRefresh()}>
+            ${props.modelAuthLoading ? t("overview.accounts.refreshing") : t("common.refresh")}
+          </button>
+        </div>
+      </div>
+
+      ${props.modelAuthError
+        ? html`<div class="callout danger" style="margin-top: 14px;">${props.modelAuthError}</div>`
+        : nothing}
+
+      ${props.modelAuthStatus?.missingProvidersInUse?.length
+        ? html`<div class="callout danger" style="margin-top: 14px;">
+            ${t("overview.accounts.missingProviders", {
+              providers: props.modelAuthStatus.missingProvidersInUse.join(", "),
+            })}
+          </div>`
+        : nothing}
+
+      ${!props.modelAuthStatus
+        ? html`<div class="callout info" style="margin-top: 14px;">${t("overview.accounts.empty")}</div>`
+        : props.modelAuthStatus.providers.length === 0
+          ? html`<div class="callout info" style="margin-top: 14px;">${t("overview.accounts.noProviders")}</div>`
+          : html`<div class="overview-auth-grid">
+              ${props.modelAuthStatus.providers.map((entry) => renderAuthProviderCard(entry, props))}
+            </div>`}
     </section>
 
     <section class="card" style="margin-top: 18px;">

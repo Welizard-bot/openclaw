@@ -22,6 +22,7 @@ import { loadDebug } from "./controllers/debug.ts";
 import { loadDevices } from "./controllers/devices.ts";
 import { loadExecApprovals } from "./controllers/exec-approvals.ts";
 import { loadLogs } from "./controllers/logs.ts";
+import { loadModelAuthStatus } from "./controllers/model-auth.ts";
 import { loadAvailableModels } from "./controllers/model-catalog.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
@@ -411,6 +412,7 @@ export async function loadOverview(host: SettingsHost) {
     loadPresence(host as unknown as OpenClawApp),
     loadSessions(host as unknown as OpenClawApp),
     loadAvailableModels(host as unknown as OpenClawApp),
+    loadModelAuthStatus(host as unknown as OpenClawApp),
     loadCronStatus(host as unknown as OpenClawApp),
     loadDebug(host as unknown as OpenClawApp),
   ]);

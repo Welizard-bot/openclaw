@@ -1,10 +1,21 @@
 import { DEFAULT_PROVIDER } from "../../agents/defaults.js";
-import { buildAllowedModelSet } from "../../agents/model-selection.js";
+import {
+  clearAuthProfileCooldown,
+  ensureAuthProfileStore,
+  resolveAuthProfileOrder,
+  setAuthProfileOrder,
+} from "../../agents/auth-profiles.js";
+import { buildAllowedModelSet, normalizeProviderId } from "../../agents/model-selection.js";
+import { getModelsAuthStatus } from "../../commands/models/auth-status.js";
 import { loadConfig } from "../../config/config.js";
 import {
   ErrorCodes,
   errorShape,
   formatValidationErrors,
+  validateModelsAuthCooldownClearParams,
+  validateModelsAuthOrderClearParams,
+  validateModelsAuthPromoteParams,
+  validateModelsAuthStatusParams,
   validateModelsListParams,
 } from "../protocol/index.js";
 import type { GatewayRequestHandlers } from "./types.js";
@@ -32,6 +43,152 @@ export const modelsHandlers: GatewayRequestHandlers = {
       });
       const models = allowedCatalog.length > 0 ? allowedCatalog : catalog;
       respond(true, { models }, undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "models.auth.status": ({ params, respond }) => {
+    if (!validateModelsAuthStatusParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid models.auth.status params: ${formatValidationErrors(validateModelsAuthStatusParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    try {
+      const agentId = typeof params.agentId === "string" ? params.agentId.trim() : undefined;
+      respond(true, getModelsAuthStatus(agentId), undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "models.auth.promote": async ({ params, respond }) => {
+    if (!validateModelsAuthPromoteParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid models.auth.promote params: ${formatValidationErrors(validateModelsAuthPromoteParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    try {
+      const status = getModelsAuthStatus(typeof params.agentId === "string" ? params.agentId.trim() : undefined);
+      const provider = normalizeProviderId(String(params.provider ?? "").trim());
+      const profileId = String(params.profileId ?? "").trim();
+      const entry = status.providers.find((item) => item.provider === provider);
+      if (!entry) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.INVALID_REQUEST, `unknown provider "${provider}"`),
+        );
+        return;
+      }
+      if (!entry.profiles.some((profile) => profile.profileId === profileId)) {
+        respond(
+          false,
+          undefined,
+          errorShape(
+            ErrorCodes.INVALID_REQUEST,
+            `profile "${profileId}" is not available for provider "${provider}"`,
+          ),
+        );
+        return;
+      }
+      const currentOrder = entry.currentOrder.length
+        ? entry.currentOrder
+        : resolveAuthProfileOrder({
+            store: ensureAuthProfileStore(status.agentDir, { allowKeychainPrompt: false }),
+            provider,
+          });
+      const nextOrder = [profileId, ...currentOrder.filter((id) => id !== profileId)];
+      const updated = await setAuthProfileOrder({
+        agentDir: status.agentDir,
+        provider,
+        order: nextOrder,
+      });
+      if (!updated) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.UNAVAILABLE, "Failed to update auth-profiles.json (lock busy?)."),
+        );
+        return;
+      }
+      respond(true, getModelsAuthStatus(status.agentId), undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "models.auth.order.clear": async ({ params, respond }) => {
+    if (!validateModelsAuthOrderClearParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid models.auth.order.clear params: ${formatValidationErrors(validateModelsAuthOrderClearParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    try {
+      const status = getModelsAuthStatus(typeof params.agentId === "string" ? params.agentId.trim() : undefined);
+      const provider = normalizeProviderId(String(params.provider ?? "").trim());
+      const updated = await setAuthProfileOrder({
+        agentDir: status.agentDir,
+        provider,
+        order: null,
+      });
+      if (
+        !updated &&
+        !status.providers.some((entry) => entry.provider === provider && entry.hasStoredOrderOverride)
+      ) {
+        respond(true, status, undefined);
+        return;
+      }
+      respond(true, getModelsAuthStatus(status.agentId), undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "models.auth.cooldown.clear": async ({ params, respond }) => {
+    if (!validateModelsAuthCooldownClearParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid models.auth.cooldown.clear params: ${formatValidationErrors(validateModelsAuthCooldownClearParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    try {
+      const status = getModelsAuthStatus(typeof params.agentId === "string" ? params.agentId.trim() : undefined);
+      const profileId = String(params.profileId ?? "").trim();
+      const store = ensureAuthProfileStore(status.agentDir, { allowKeychainPrompt: false });
+      if (!store.profiles[profileId]) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.INVALID_REQUEST, `unknown auth profile "${profileId}"`),
+        );
+        return;
+      }
+      await clearAuthProfileCooldown({
+        store,
+        profileId,
+        agentDir: status.agentDir,
+      });
+      respond(true, getModelsAuthStatus(status.agentId), undefined);
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
     }

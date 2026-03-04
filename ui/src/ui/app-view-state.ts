@@ -25,6 +25,7 @@ import type {
   PresenceEntry,
   SessionsUsageResult,
   CostUsageSummary,
+  ModelsAuthStatusResult,
   SessionUsageTimeSeries,
   SessionsListResult,
   SkillStatusReport,
@@ -158,6 +159,10 @@ export type AppViewState = {
   sessionsHideCron: boolean;
   availableModelsLoading: boolean;
   availableModels: import("./types.ts").ModelCatalogEntry[];
+  modelAuthLoading: boolean;
+  modelAuthBusyKey: string | null;
+  modelAuthError: string | null;
+  modelAuthStatus: ModelsAuthStatusResult | null;
   wizardOpen: boolean;
   wizardLoading: boolean;
   wizardBusy: boolean;
@@ -313,6 +318,10 @@ export type AppViewState = {
     handleSessionsPatch: (key: string, patch: unknown) => Promise<void>;
     handleLoadNodes: () => Promise<void>;
     handleLoadPresence: () => Promise<void>;
+    handleLoadModelAuthStatus: () => Promise<void>;
+    handlePromoteModelAuthProfile: (provider: string, profileId: string) => Promise<void>;
+    handleClearModelAuthOrder: (provider: string) => Promise<void>;
+    handleClearModelAuthCooldown: (profileId: string) => Promise<void>;
     handleStartSetupWizard: (mode: "local" | "remote") => Promise<void>;
     handleSubmitSetupWizard: () => Promise<void>;
     handleCancelSetupWizard: () => Promise<void>;
