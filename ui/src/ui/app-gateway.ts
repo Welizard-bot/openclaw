@@ -26,6 +26,7 @@ import {
   removeExecApproval,
 } from "./controllers/exec-approval.ts";
 import { loadNodes } from "./controllers/nodes.ts";
+import { loadAvailableModels } from "./controllers/model-catalog.ts";
 import { loadSessions } from "./controllers/sessions.ts";
 import {
   resolveGatewayErrorDetailCode,
@@ -170,6 +171,7 @@ export function connectGateway(host: GatewayHost) {
       void loadAssistantIdentity(host as unknown as OpenClawApp);
       void loadAgents(host as unknown as OpenClawApp);
       void loadToolsCatalog(host as unknown as OpenClawApp);
+      void loadAvailableModels(host as unknown as OpenClawApp);
       void loadNodes(host as unknown as OpenClawApp, { quiet: true });
       void loadDevices(host as unknown as OpenClawApp, { quiet: true });
       void refreshActiveTab(host as unknown as Parameters<typeof refreshActiveTab>[0]);

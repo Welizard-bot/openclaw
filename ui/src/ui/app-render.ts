@@ -53,6 +53,7 @@ import {
   updateExecApprovalsFormValue,
 } from "./controllers/exec-approvals.ts";
 import { loadLogs } from "./controllers/logs.ts";
+import { modelCatalogEntryRef, resolveModelRef } from "./model-utils.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
 import { deleteSessionAndRefresh, loadSessions, patchSession } from "./controllers/sessions.ts";
@@ -434,6 +435,16 @@ export function renderApp(state: AppViewState) {
                 onRefresh: () => loadSessions(state),
                 onPatch: (key, patch) => patchSession(state, key, patch),
                 onDelete: (key) => deleteSessionAndRefresh(state, key),
+                modelSuggestions: Array.from(
+                  new Set(
+                    [
+                      ...(state.availableModels ?? []).map((entry) => modelCatalogEntryRef(entry)),
+                      ...((state.sessionsResult?.sessions ?? []).map((row) =>
+                        resolveModelRef(row.modelProvider, row.model),
+                      )),
+                    ].filter(Boolean),
+                  ),
+                ).toSorted((a, b) => a.localeCompare(b)),
               })
             : nothing
         }

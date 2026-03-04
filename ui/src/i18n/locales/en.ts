@@ -106,6 +106,15 @@ export const en: TranslationMap = {
       stayHttp: "If you must stay on HTTP, set {config} (token-only).",
     },
   },
+  sessions: {
+    model: "Model",
+    modelPlaceholder: "provider/model",
+    activeModel: "Active: {model}",
+    defaultModel: "Default: {model}",
+    inheritedModel: "Inherits the gateway default model.",
+    overrideModel: "Session override active",
+    useDefault: "Use default",
+  },
   chat: {
     disconnected: "Disconnected from gateway.",
     refreshTitle: "Refresh chat data",

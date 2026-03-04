@@ -1,5 +1,6 @@
 import type { EventLogEntry } from "./app-events.ts";
 import type { CompactionStatus, FallbackStatus } from "./app-tool-stream.ts";
+import type { ModelCatalogState } from "./controllers/model-catalog.ts";
 import type { CronModelSuggestionsState, CronState } from "./controllers/cron.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
@@ -154,6 +155,8 @@ export type AppViewState = {
   sessionsIncludeGlobal: boolean;
   sessionsIncludeUnknown: boolean;
   sessionsHideCron: boolean;
+  availableModelsLoading: boolean;
+  availableModels: import("./types.ts").ModelCatalogEntry[];
   usageLoading: boolean;
   usageResult: SessionsUsageResult | null;
   usageCostSummary: CostUsageSummary | null;
@@ -224,7 +227,8 @@ export type AppViewState = {
   | "cronRunsSortDir"
   | "cronBusy"
 > &
-  Pick<CronModelSuggestionsState, "cronModelSuggestions"> & {
+  Pick<CronModelSuggestionsState, "cronModelSuggestions"> &
+  Pick<ModelCatalogState, "availableModelsLoading" | "availableModels"> & {
     skillsLoading: boolean;
     skillsReport: SkillStatusReport | null;
     skillsError: string | null;

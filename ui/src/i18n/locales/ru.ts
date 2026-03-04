@@ -106,11 +106,23 @@ export const ru: TranslationMap = {
       stayHttp: "Если вы должны остаться на HTTP, установите {config} (только токен).",
     },
   },
+  sessions: {
+    model: "Модель",
+    modelPlaceholder: "provider/model",
+    activeModel: "Активная: {model}",
+    defaultModel: "По умолчанию: {model}",
+    inheritedModel: "Наследует модель шлюза по умолчанию.",
+    overrideModel: "Активен override для сессии",
+    useDefault: "Использовать default",
+  },
   chat: {
     disconnected: "Отключено от шлюза.",
     refreshTitle: "Обновить данные чата",
     thinkingToggle: "Переключить вывод мыслей/работы ассистента",
     focusToggle: "Переключить режим фокуса (скрыть боковую панель + заголовок страницы)",
+    hideCronSessions: "Скрыть cron-сессии",
+    showCronSessions: "Показать cron-сессии",
+    showCronSessionsHidden: "Показать cron-сессии ({count} скрыто)",
     onboardingDisabled: "Отключено во время онбординга",
   },
   languages: {

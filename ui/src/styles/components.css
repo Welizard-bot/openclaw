@@ -203,6 +203,23 @@
   font-size: 12px;
 }
 
+.session-model-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.session-model-control input {
+  min-width: 0;
+}
+
+.session-model-meta {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 /* ===========================================
    Labels & Pills
    =========================================== */

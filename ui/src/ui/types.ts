@@ -7,6 +7,7 @@ import type {
   SessionsPatchResultBase,
 } from "../../../src/shared/session-types.js";
 export type { ConfigUiHints } from "../../../src/shared/config-ui-hints-types.js";
+export type ModelCatalogEntry = import("../../../src/gateway/protocol/schema/types.js").ModelChoice;
 
 export type ChannelsStatusSnapshot = {
   ts: number;
@@ -316,6 +317,7 @@ export type PresenceEntry = {
 };
 
 export type GatewaySessionsDefaults = {
+  modelProvider: string | null;
   model: string | null;
   contextTokens: number | null;
 };

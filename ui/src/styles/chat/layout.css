@@ -47,6 +47,21 @@
   min-width: 180px;
 }
 
+.chat-controls__model {
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.chat-controls__model input {
+  min-width: 0;
+}
+
+.chat-controls__model-meta {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 /* Chat thread - scrollable middle section, transparent */
 .chat-thread {
   flex: 1 1 0; /* Grow, shrink, and use 0 base for proper scrolling */

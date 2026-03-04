@@ -6,7 +6,9 @@ import { syncUrlWithSessionKey } from "./app-settings.ts";
 import type { AppViewState } from "./app-view-state.ts";
 import { OpenClawApp } from "./app.ts";
 import { ChatState, loadChatHistory } from "./controllers/chat.ts";
+import { patchSession } from "./controllers/sessions.ts";
 import { icons } from "./icons.ts";
+import { modelCatalogEntryRef, resolveModelRef } from "./model-utils.ts";
 import { iconForTab, pathForTab, titleForTab, type Tab } from "./navigation.ts";
 import type { ThemeTransitionContext } from "./theme-transition.ts";
 import type { ThemeMode } from "./theme.ts";
@@ -122,6 +124,16 @@ function renderCronFilterIcon(hiddenCount: number) {
   `;
 }
 
+function renderSuggestionList(id: string, options: string[]) {
+  const clean = Array.from(new Set(options.map((option) => option.trim()).filter(Boolean)));
+  if (clean.length === 0) {
+    return html``;
+  }
+  return html`<datalist id=${id}>
+    ${clean.map((value) => html`<option value=${value}></option>`)}
+  </datalist>`;
+}
+
 export function renderChatControls(state: AppViewState) {
   const mainSessionKey = resolveMainSessionKey(state.hello, state.sessionsResult);
   const hideCron = state.sessionsHideCron ?? true;
@@ -134,6 +146,28 @@ export function renderChatControls(state: AppViewState) {
     mainSessionKey,
     hideCron,
   );
+  const activeSession = state.sessionsResult?.sessions?.find((row) => row.key === state.sessionKey);
+  const activeModelRef = resolveModelRef(activeSession?.modelProvider, activeSession?.model);
+  const defaultModelRef = resolveModelRef(
+    state.sessionsResult?.defaults.modelProvider,
+    state.sessionsResult?.defaults.model,
+  );
+  const usingDefaultModel =
+    !activeModelRef ||
+    !defaultModelRef ||
+    activeModelRef.toLowerCase() === defaultModelRef.toLowerCase();
+  const modelSuggestions = Array.from(
+    new Set(
+      [
+        activeModelRef,
+        defaultModelRef,
+        ...(state.sessionsResult?.sessions ?? []).map((row) =>
+          resolveModelRef(row.modelProvider, row.model),
+        ),
+        ...state.availableModels.map((entry) => modelCatalogEntryRef(entry)),
+      ].filter(Boolean),
+    ),
+  ).toSorted((a, b) => a.localeCompare(b));
   const disableThinkingToggle = state.onboarding;
   const disableFocusToggle = state.onboarding;
   const showThinking = state.onboarding ? false : state.settings.chatShowThinking;
@@ -211,6 +245,41 @@ export function renderChatControls(state: AppViewState) {
           )}
         </select>
       </label>
+      <label class="field chat-controls__model">
+        <span>${t("sessions.model")}</span>
+        <input
+          .value=${activeModelRef}
+          list="chat-model-suggestions"
+          ?disabled=${!state.connected}
+          placeholder=${defaultModelRef || t("sessions.modelPlaceholder")}
+          title=${activeModelRef
+            ? t("sessions.activeModel", { model: activeModelRef })
+            : t("sessions.inheritedModel")}
+          @change=${(e: Event) => {
+            const next = (e.target as HTMLInputElement).value.trim();
+            void patchSession(state, state.sessionKey, { model: next || null });
+          }}
+        />
+        <div class="chat-controls__model-meta">
+          ${usingDefaultModel
+            ? activeModelRef
+              ? t("sessions.defaultModel", { model: activeModelRef })
+              : t("sessions.inheritedModel")
+            : activeModelRef
+              ? t("sessions.activeModel", { model: activeModelRef })
+              : t("sessions.inheritedModel")}
+        </div>
+      </label>
+      <button
+        class="btn btn--sm"
+        ?disabled=${!state.connected || usingDefaultModel}
+        @click=${() => void patchSession(state, state.sessionKey, { model: null })}
+        title=${defaultModelRef
+          ? t("sessions.defaultModel", { model: defaultModelRef })
+          : t("sessions.inheritedModel")}
+      >
+        ${t("sessions.useDefault")}
+      </button>
       <button
         class="btn btn--sm btn--icon"
         ?disabled=${state.chatLoading || !state.connected}
@@ -287,6 +356,7 @@ export function renderChatControls(state: AppViewState) {
       >
         ${renderCronFilterIcon(hiddenCronCount)}
       </button>
+      ${renderSuggestionList("chat-model-suggestions", modelSuggestions)}
     </div>
   `;
 }

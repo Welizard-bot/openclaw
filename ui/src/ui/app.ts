@@ -73,14 +73,15 @@ import type {
   CronStatus,
   HealthSnapshot,
   LogEntry,
-  LogLevel,
-  PresenceEntry,
-  ChannelsStatusSnapshot,
-  SessionsListResult,
-  SkillStatusReport,
-  ToolsCatalogResult,
-  StatusSummary,
-  NostrProfile,
+    LogLevel,
+    PresenceEntry,
+    ChannelsStatusSnapshot,
+    SessionsListResult,
+    SkillStatusReport,
+    ToolsCatalogResult,
+    ModelCatalogEntry,
+    StatusSummary,
+    NostrProfile,
 } from "./types.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 import { generateUUID } from "./uuid.ts";
@@ -246,6 +247,8 @@ export class OpenClawApp extends LitElement {
   @state() sessionsIncludeGlobal = true;
   @state() sessionsIncludeUnknown = false;
   @state() sessionsHideCron = true;
+  @state() availableModelsLoading = false;
+  @state() availableModels: ModelCatalogEntry[] = [];
 
   @state() usageLoading = false;
   @state() usageResult: import("./types.js").SessionsUsageResult | null = null;
