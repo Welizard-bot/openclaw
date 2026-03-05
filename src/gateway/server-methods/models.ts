@@ -108,7 +108,13 @@ export const modelsHandlers: GatewayRequestHandlers = {
             store: ensureAuthProfileStore(status.agentDir, { allowKeychainPrompt: false }),
             provider,
           });
-      const nextOrder = [profileId, ...currentOrder.filter((id) => id !== profileId)];
+      const knownProfileIds = [
+        ...currentOrder,
+        ...entry.profiles
+          .map((profile) => profile.profileId)
+          .filter((id) => !currentOrder.includes(id)),
+      ];
+      const nextOrder = [profileId, ...knownProfileIds.filter((id) => id !== profileId)];
       const updated = await setAuthProfileOrder({
         agentDir: status.agentDir,
         provider,

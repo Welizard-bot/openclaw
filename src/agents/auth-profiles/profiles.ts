@@ -11,6 +11,26 @@ export function dedupeProfileIds(profileIds: string[]): string[] {
   return [...new Set(profileIds)];
 }
 
+function findProviderOrderKeys(order: Record<string, string[]>, provider: string): string[] {
+  const providerKey = normalizeProviderId(provider);
+  return Object.keys(order).filter((key) => normalizeProviderId(key) === providerKey);
+}
+
+function arraysEqual(left: string[] | undefined, right: string[]): boolean {
+  if (!left) {
+    return right.length === 0;
+  }
+  if (left.length !== right.length) {
+    return false;
+  }
+  for (let i = 0; i < left.length; i += 1) {
+    if (left[i] !== right[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function setAuthProfileOrder(params: {
   agentDir?: string;
   provider: string;
@@ -27,15 +47,29 @@ export async function setAuthProfileOrder(params: {
     agentDir: params.agentDir,
     updater: (store) => {
       store.order = store.order ?? {};
+      const matchingKeys = findProviderOrderKeys(store.order, providerKey);
       if (deduped.length === 0) {
-        if (!store.order[providerKey]) {
+        if (matchingKeys.length === 0) {
           return false;
         }
-        delete store.order[providerKey];
+        for (const key of matchingKeys) {
+          delete store.order[key];
+        }
         if (Object.keys(store.order).length === 0) {
           store.order = undefined;
         }
         return true;
+      }
+
+      const existing = matchingKeys[0] ? store.order[matchingKeys[0]] : undefined;
+      const alreadyCanonical =
+        matchingKeys.length === 1 && matchingKeys[0] === providerKey && arraysEqual(existing, deduped);
+      if (alreadyCanonical) {
+        return false;
+      }
+
+      for (const key of matchingKeys) {
+        delete store.order[key];
       }
       store.order[providerKey] = deduped;
       return true;
