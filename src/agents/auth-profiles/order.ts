@@ -57,6 +57,16 @@ export function resolveAuthProfileOrder(params: {
         }
       }
     }
+    const stats = store.usageStats?.[profileId];
+    if (
+      stats?.disabledReason === "manual" &&
+      typeof stats.disabledUntil === "number" &&
+      Number.isFinite(stats.disabledUntil) &&
+      stats.disabledUntil > 0 &&
+      now < stats.disabledUntil
+    ) {
+      return false;
+    }
     if (cred.type === "api_key") {
       return Boolean(cred.key?.trim());
     }

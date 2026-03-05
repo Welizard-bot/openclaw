@@ -6,8 +6,10 @@ export { resolveAuthProfileOrder } from "./auth-profiles/order.js";
 export { resolveAuthStorePathForDisplay } from "./auth-profiles/paths.js";
 export {
   dedupeProfileIds,
+  deleteAuthProfile,
   listProfilesForProvider,
   markAuthProfileGood,
+  setAuthProfileManualDisabled,
   setAuthProfileOrder,
   upsertAuthProfile,
   upsertAuthProfileWithLock,

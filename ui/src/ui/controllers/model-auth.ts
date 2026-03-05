@@ -86,3 +86,29 @@ export async function clearModelAuthCooldown(state: ModelAuthState, profileId: s
   );
 }
 
+export async function disableModelAuthProfile(state: ModelAuthState, profileId: string) {
+  await runModelAuthAction(
+    state,
+    `disable:${profileId}`,
+    "models.auth.profile.disable",
+    { profileId },
+  );
+}
+
+export async function enableModelAuthProfile(state: ModelAuthState, profileId: string) {
+  await runModelAuthAction(
+    state,
+    `enable:${profileId}`,
+    "models.auth.profile.enable",
+    { profileId },
+  );
+}
+
+export async function deleteModelAuthProfile(state: ModelAuthState, profileId: string) {
+  await runModelAuthAction(
+    state,
+    `delete:${profileId}`,
+    "models.auth.profile.delete",
+    { profileId },
+  );
+}

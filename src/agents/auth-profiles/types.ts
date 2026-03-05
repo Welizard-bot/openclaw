@@ -36,6 +36,7 @@ export type OAuthCredential = OAuthCredentials & {
 export type AuthProfileCredential = ApiKeyCredential | TokenCredential | OAuthCredential;
 
 export type AuthProfileFailureReason =
+  | "manual"
   | "auth"
   | "auth_permanent"
   | "format"

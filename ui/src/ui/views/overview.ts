@@ -41,6 +41,10 @@ export type OverviewProps = {
   onPromoteProfile: (provider: string, profileId: string) => void;
   onClearProviderOrder: (provider: string) => void;
   onClearProfileCooldown: (profileId: string) => void;
+  onDisableProfile: (profileId: string) => void;
+  onEnableProfile: (profileId: string) => void;
+  onDeleteProfile: (profileId: string) => void;
+  onStartProviderAuth: (provider: string) => void;
   onStartWizard: (mode: "local" | "remote") => void;
 };
 
@@ -94,12 +98,22 @@ function formatProfileType(type: ModelsAuthProfileStatus["type"]) {
 }
 
 function formatProfileState(profile: ModelsAuthProfileStatus) {
+  const disabledReason = (() => {
+    if (!profile.disabledReason) {
+      return "";
+    }
+    if (profile.disabledReason === "manual") {
+      return ` · ${t("overview.accounts.disabledManual")}`;
+    }
+    return ` · ${profile.disabledReason}`;
+  })();
   if (profile.unusableKind === "disabled") {
-    const reason = profile.disabledReason ? ` · ${profile.disabledReason}` : "";
     const remaining = profile.unusableRemainingMs
-      ? ` · ${formatDurationHuman(profile.unusableRemainingMs)}`
+      ? profile.disabledReason === "manual"
+        ? ""
+        : ` · ${formatDurationHuman(profile.unusableRemainingMs)}`
       : "";
-    return `${t("overview.accounts.disabled")}${reason}${remaining}`;
+    return `${t("overview.accounts.disabled")}${disabledReason}${remaining}`;
   }
   if (profile.unusableKind === "cooldown") {
     const remaining = profile.unusableRemainingMs
@@ -124,7 +138,12 @@ function renderProfileRow(
   const isBusy =
     props.modelAuthBusyKey != null &&
     (props.modelAuthBusyKey === `promote:${provider.provider}:${profile.profileId}` ||
-      props.modelAuthBusyKey === `clear-cooldown:${profile.profileId}`);
+      props.modelAuthBusyKey === `clear-cooldown:${profile.profileId}` ||
+      props.modelAuthBusyKey === `disable:${profile.profileId}` ||
+      props.modelAuthBusyKey === `enable:${profile.profileId}` ||
+      props.modelAuthBusyKey === `delete:${profile.profileId}`);
+  const isManualDisabled = profile.unusableKind === "disabled" && profile.disabledReason === "manual";
+  const canDisable = profile.unusableKind === "available" || profile.unusableKind === "cooldown";
   return html`
     <div
       class="overview-auth-profile ${profile.isCurrent ? "overview-auth-profile--current" : ""} ${profile.unusableKind !== "available" ? "overview-auth-profile--blocked" : ""}"
@@ -168,7 +187,7 @@ function renderProfileRow(
         >
           ${t("overview.accounts.makePrimary")}
         </button>
-        ${profile.unusableKind !== "available"
+        ${profile.unusableKind !== "available" && !isManualDisabled
           ? html`<button
               class="btn btn--sm"
               ?disabled=${Boolean(props.modelAuthBusyKey) || isBusy}
@@ -177,6 +196,37 @@ function renderProfileRow(
               ${t("overview.accounts.clearCooldown")}
             </button>`
           : nothing}
+        ${canDisable
+          ? html`<button
+              class="btn btn--sm"
+              ?disabled=${Boolean(props.modelAuthBusyKey) || isBusy}
+              @click=${() => props.onDisableProfile(profile.profileId)}
+            >
+              ${t("overview.accounts.disableFromPool")}
+            </button>`
+          : isManualDisabled
+            ? html`<button
+                class="btn btn--sm"
+                ?disabled=${Boolean(props.modelAuthBusyKey) || isBusy}
+                @click=${() => props.onEnableProfile(profile.profileId)}
+              >
+                ${t("overview.accounts.enableInPool")}
+              </button>`
+            : nothing}
+        <button
+          class="btn btn--sm danger"
+          ?disabled=${Boolean(props.modelAuthBusyKey) || isBusy}
+          @click=${() => {
+            const confirmed = window.confirm(
+              t("overview.accounts.deleteConfirm", { profileId: profile.profileId }),
+            );
+            if (confirmed) {
+              props.onDeleteProfile(profile.profileId);
+            }
+          }}
+        >
+          ${t("overview.accounts.deleteProfile")}
+        </button>
       </div>
     </div>
   `;
@@ -201,6 +251,13 @@ function renderAuthProviderCard(entry: ModelsAuthProviderStatus, props: Overview
           </div>
         </div>
         <div class="overview-auth-provider__actions">
+          <button
+            class="btn btn--sm"
+            ?disabled=${Boolean(props.modelAuthBusyKey) || props.wizardLoading || props.wizardBusy || props.wizardOpen}
+            @click=${() => props.onStartProviderAuth(entry.provider)}
+          >
+            ${t("overview.accounts.oauthReauth")}
+          </button>
           <button class="btn btn--sm" ?disabled=${Boolean(props.modelAuthBusyKey) || !entry.hasStoredOrderOverride} @click=${() => props.onClearProviderOrder(entry.provider)}>
             ${t("overview.accounts.resetOrder")}
           </button>

@@ -5,11 +5,13 @@ import {
   saveAuthProfileStore,
   updateAuthProfileStoreWithLock,
 } from "./store.js";
-import type { AuthProfileCredential, AuthProfileStore } from "./types.js";
+import type { AuthProfileCredential, AuthProfileStore, ProfileUsageStats } from "./types.js";
 
 export function dedupeProfileIds(profileIds: string[]): string[] {
   return [...new Set(profileIds)];
 }
+
+const MANUAL_DISABLE_UNTIL_MS = Date.UTC(2100, 0, 1);
 
 function findProviderOrderKeys(order: Record<string, string[]>, provider: string): string[] {
   const providerKey = normalizeProviderId(provider);
@@ -72,6 +74,100 @@ export async function setAuthProfileOrder(params: {
         delete store.order[key];
       }
       store.order[providerKey] = deduped;
+      return true;
+    },
+  });
+}
+
+export async function setAuthProfileManualDisabled(params: {
+  agentDir?: string;
+  profileId: string;
+  disabled: boolean;
+}): Promise<AuthProfileStore | null> {
+  return await updateAuthProfileStoreWithLock({
+    agentDir: params.agentDir,
+    updater: (store) => {
+      if (!store.profiles[params.profileId]) {
+        return false;
+      }
+      const stats = (store.usageStats?.[params.profileId] ?? {}) as ProfileUsageStats;
+      const hasManualDisable =
+        stats.disabledReason === "manual" &&
+        typeof stats.disabledUntil === "number" &&
+        Number.isFinite(stats.disabledUntil) &&
+        stats.disabledUntil > Date.now();
+      if (params.disabled) {
+        if (hasManualDisable) {
+          return false;
+        }
+        store.usageStats = store.usageStats ?? {};
+        store.usageStats[params.profileId] = {
+          ...stats,
+          cooldownUntil: undefined,
+          disabledUntil: MANUAL_DISABLE_UNTIL_MS,
+          disabledReason: "manual",
+        };
+        return true;
+      }
+      if (!hasManualDisable) {
+        return false;
+      }
+      store.usageStats = store.usageStats ?? {};
+      store.usageStats[params.profileId] = {
+        ...stats,
+        disabledUntil: undefined,
+        disabledReason: undefined,
+      };
+      return true;
+    },
+  });
+}
+
+export async function deleteAuthProfile(params: {
+  agentDir?: string;
+  profileId: string;
+}): Promise<AuthProfileStore | null> {
+  return await updateAuthProfileStoreWithLock({
+    agentDir: params.agentDir,
+    updater: (store) => {
+      if (!store.profiles[params.profileId]) {
+        return false;
+      }
+
+      delete store.profiles[params.profileId];
+
+      if (store.order) {
+        for (const [provider, order] of Object.entries(store.order)) {
+          const next = order.filter((id) => id !== params.profileId);
+          if (next.length > 0) {
+            store.order[provider] = next;
+          } else {
+            delete store.order[provider];
+          }
+        }
+        if (Object.keys(store.order).length === 0) {
+          store.order = undefined;
+        }
+      }
+
+      if (store.lastGood) {
+        for (const [provider, profileId] of Object.entries(store.lastGood)) {
+          if (profileId === params.profileId) {
+            delete store.lastGood[provider];
+          }
+        }
+        if (Object.keys(store.lastGood).length === 0) {
+          store.lastGood = undefined;
+        }
+      }
+
+      if (store.usageStats) {
+        delete store.usageStats[params.profileId];
+        if (Object.keys(store.usageStats).length === 0) {
+          store.usageStats = undefined;
+        }
+      }
+
       return true;
     },
   });

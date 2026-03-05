@@ -60,6 +60,9 @@ import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exe
 import {
   clearModelAuthCooldown as clearModelAuthCooldownInternal,
   clearModelAuthOrder as clearModelAuthOrderInternal,
+  deleteModelAuthProfile as deleteModelAuthProfileInternal,
+  disableModelAuthProfile as disableModelAuthProfileInternal,
+  enableModelAuthProfile as enableModelAuthProfileInternal,
   loadModelAuthStatus as loadModelAuthStatusInternal,
   promoteModelAuthProfile as promoteModelAuthProfileInternal,
 } from "./controllers/model-auth.ts";
@@ -248,6 +251,8 @@ export class OpenClawApp extends LitElement {
   @state() wizardLoading = false;
   @state() wizardBusy = false;
   @state() wizardMode: "local" | "remote" = "local";
+  @state() wizardIntent: "onboarding" | "models-auth-login" = "onboarding";
+  @state() wizardContextLabel: string | null = null;
   @state() wizardSessionId: string | null = null;
   @state() wizardStatus: "running" | "done" | "cancelled" | "error" | null = null;
   @state() wizardError: string | null = null;
@@ -522,8 +527,28 @@ export class OpenClawApp extends LitElement {
     await clearModelAuthCooldownInternal(this, profileId);
   }
 
+  async handleDisableModelAuthProfile(profileId: string) {
+    await disableModelAuthProfileInternal(this, profileId);
+  }
+
+  async handleEnableModelAuthProfile(profileId: string) {
+    await enableModelAuthProfileInternal(this, profileId);
+  }
+
+  async handleDeleteModelAuthProfile(profileId: string) {
+    await deleteModelAuthProfileInternal(this, profileId);
+  }
+
   async handleStartSetupWizard(mode: "local" | "remote") {
-    await startSetupWizardInternal(this, mode);
+    await startSetupWizardInternal(this, mode, { intent: "onboarding" });
+  }
+
+  async handleStartProviderAuth(provider: string) {
+    await startSetupWizardInternal(this, "local", {
+      intent: "models-auth-login",
+      provider,
+      oauthOnly: false,
+    });
   }
 
   async handleSubmitSetupWizard() {

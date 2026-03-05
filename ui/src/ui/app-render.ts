@@ -386,6 +386,13 @@ export function renderApp(state: AppViewState) {
                   void state.handleClearModelAuthOrder(provider),
                 onClearProfileCooldown: (profileId) =>
                   void state.handleClearModelAuthCooldown(profileId),
+                onDisableProfile: (profileId) =>
+                  void state.handleDisableModelAuthProfile(profileId),
+                onEnableProfile: (profileId) =>
+                  void state.handleEnableModelAuthProfile(profileId),
+                onDeleteProfile: (profileId) =>
+                  void state.handleDeleteModelAuthProfile(profileId),
+                onStartProviderAuth: (provider) => void state.handleStartProviderAuth(provider),
                 onStartWizard: (mode) => void state.handleStartSetupWizard(mode),
               })
             : nothing

@@ -1,6 +1,7 @@
 export type EmbeddedContextFile = { path: string; content: string };
 
 export type FailoverReason =
+  | "manual"
   | "auth"
   | "auth_permanent"
   | "format"

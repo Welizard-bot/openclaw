@@ -101,6 +101,9 @@ const METHOD_SCOPE_GROUPS: Record<OperatorScope, readonly string[]> = {
     "models.auth.promote",
     "models.auth.order.clear",
     "models.auth.cooldown.clear",
+    "models.auth.profile.disable",
+    "models.auth.profile.enable",
+    "models.auth.profile.delete",
     "push.test",
   ],
   [ADMIN_SCOPE]: [

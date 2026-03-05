@@ -205,6 +205,30 @@ export const ModelsAuthCooldownClearParamsSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const ModelsAuthProfileDisableParamsSchema = Type.Object(
+  {
+    profileId: NonEmptyString,
+    agentId: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
+export const ModelsAuthProfileEnableParamsSchema = Type.Object(
+  {
+    profileId: NonEmptyString,
+    agentId: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
+export const ModelsAuthProfileDeleteParamsSchema = Type.Object(
+  {
+    profileId: NonEmptyString,
+    agentId: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
 export const SkillsStatusParamsSchema = Type.Object(
   {
     agentId: Type.Optional(NonEmptyString),

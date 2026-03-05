@@ -1,8 +1,10 @@
 import { DEFAULT_PROVIDER } from "../../agents/defaults.js";
 import {
   clearAuthProfileCooldown,
+  deleteAuthProfile,
   ensureAuthProfileStore,
   resolveAuthProfileOrder,
+  setAuthProfileManualDisabled,
   setAuthProfileOrder,
 } from "../../agents/auth-profiles.js";
 import { buildAllowedModelSet, normalizeProviderId } from "../../agents/model-selection.js";
@@ -13,6 +15,9 @@ import {
   errorShape,
   formatValidationErrors,
   validateModelsAuthCooldownClearParams,
+  validateModelsAuthProfileDeleteParams,
+  validateModelsAuthProfileDisableParams,
+  validateModelsAuthProfileEnableParams,
   validateModelsAuthOrderClearParams,
   validateModelsAuthPromoteParams,
   validateModelsAuthStatusParams,
@@ -191,6 +196,128 @@ export const modelsHandlers: GatewayRequestHandlers = {
         profileId,
         agentDir: status.agentDir,
       });
+      respond(true, getModelsAuthStatus(status.agentId), undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "models.auth.profile.disable": async ({ params, respond }) => {
+    if (!validateModelsAuthProfileDisableParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid models.auth.profile.disable params: ${formatValidationErrors(validateModelsAuthProfileDisableParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    try {
+      const status = getModelsAuthStatus(typeof params.agentId === "string" ? params.agentId.trim() : undefined);
+      const profileId = String(params.profileId ?? "").trim();
+      if (!status.providers.some((entry) => entry.profiles.some((profile) => profile.profileId === profileId))) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.INVALID_REQUEST, `unknown auth profile "${profileId}"`),
+        );
+        return;
+      }
+      const updated = await setAuthProfileManualDisabled({
+        agentDir: status.agentDir,
+        profileId,
+        disabled: true,
+      });
+      if (!updated) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.UNAVAILABLE, "Failed to disable auth profile."),
+        );
+        return;
+      }
+      respond(true, getModelsAuthStatus(status.agentId), undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "models.auth.profile.enable": async ({ params, respond }) => {
+    if (!validateModelsAuthProfileEnableParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid models.auth.profile.enable params: ${formatValidationErrors(validateModelsAuthProfileEnableParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    try {
+      const status = getModelsAuthStatus(typeof params.agentId === "string" ? params.agentId.trim() : undefined);
+      const profileId = String(params.profileId ?? "").trim();
+      if (!status.providers.some((entry) => entry.profiles.some((profile) => profile.profileId === profileId))) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.INVALID_REQUEST, `unknown auth profile "${profileId}"`),
+        );
+        return;
+      }
+      const updated = await setAuthProfileManualDisabled({
+        agentDir: status.agentDir,
+        profileId,
+        disabled: false,
+      });
+      if (!updated) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.UNAVAILABLE, "Failed to enable auth profile."),
+        );
+        return;
+      }
+      respond(true, getModelsAuthStatus(status.agentId), undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "models.auth.profile.delete": async ({ params, respond }) => {
+    if (!validateModelsAuthProfileDeleteParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid models.auth.profile.delete params: ${formatValidationErrors(validateModelsAuthProfileDeleteParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    try {
+      const status = getModelsAuthStatus(typeof params.agentId === "string" ? params.agentId.trim() : undefined);
+      const profileId = String(params.profileId ?? "").trim();
+      if (!status.providers.some((entry) => entry.profiles.some((profile) => profile.profileId === profileId))) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.INVALID_REQUEST, `unknown auth profile "${profileId}"`),
+        );
+        return;
+      }
+      const updated = await deleteAuthProfile({
+        agentDir: status.agentDir,
+        profileId,
+      });
+      if (!updated) {
+        respond(
+          false,
+          undefined,
+          errorShape(ErrorCodes.UNAVAILABLE, "Failed to delete auth profile."),
+        );
+        return;
+      }
       respond(true, getModelsAuthStatus(status.agentId), undefined);
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));

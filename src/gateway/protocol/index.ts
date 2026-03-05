@@ -134,6 +134,12 @@ import {
   ModelsListParamsSchema,
   type ModelsAuthCooldownClearParams,
   ModelsAuthCooldownClearParamsSchema,
+  type ModelsAuthProfileDeleteParams,
+  ModelsAuthProfileDeleteParamsSchema,
+  type ModelsAuthProfileDisableParams,
+  ModelsAuthProfileDisableParamsSchema,
+  type ModelsAuthProfileEnableParams,
+  ModelsAuthProfileEnableParamsSchema,
   type ModelsAuthOrderClearParams,
   ModelsAuthOrderClearParamsSchema,
   type ModelsAuthPromoteParams,
@@ -337,6 +343,12 @@ export const validateModelsAuthOrderClearParams =
   ajv.compile<ModelsAuthOrderClearParams>(ModelsAuthOrderClearParamsSchema);
 export const validateModelsAuthCooldownClearParams =
   ajv.compile<ModelsAuthCooldownClearParams>(ModelsAuthCooldownClearParamsSchema);
+export const validateModelsAuthProfileDisableParams =
+  ajv.compile<ModelsAuthProfileDisableParams>(ModelsAuthProfileDisableParamsSchema);
+export const validateModelsAuthProfileEnableParams =
+  ajv.compile<ModelsAuthProfileEnableParams>(ModelsAuthProfileEnableParamsSchema);
+export const validateModelsAuthProfileDeleteParams =
+  ajv.compile<ModelsAuthProfileDeleteParams>(ModelsAuthProfileDeleteParamsSchema);
 export const validateSkillsStatusParams = ajv.compile<SkillsStatusParams>(SkillsStatusParamsSchema);
 export const validateToolsCatalogParams = ajv.compile<ToolsCatalogParams>(ToolsCatalogParamsSchema);
 export const validateSkillsBinsParams = ajv.compile<SkillsBinsParams>(SkillsBinsParamsSchema);

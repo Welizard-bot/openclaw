@@ -26,6 +26,9 @@ import type {
   AgentsUpdateResultSchema,
   ModelChoiceSchema,
   ModelsAuthCooldownClearParamsSchema,
+  ModelsAuthProfileDeleteParamsSchema,
+  ModelsAuthProfileDisableParamsSchema,
+  ModelsAuthProfileEnableParamsSchema,
   ModelsAuthOrderClearParamsSchema,
   ModelsAuthPromoteParamsSchema,
   ModelsAuthStatusParamsSchema,
@@ -223,6 +226,9 @@ export type ModelsAuthStatusParams = Static<typeof ModelsAuthStatusParamsSchema>
 export type ModelsAuthPromoteParams = Static<typeof ModelsAuthPromoteParamsSchema>;
 export type ModelsAuthOrderClearParams = Static<typeof ModelsAuthOrderClearParamsSchema>;
 export type ModelsAuthCooldownClearParams = Static<typeof ModelsAuthCooldownClearParamsSchema>;
+export type ModelsAuthProfileDisableParams = Static<typeof ModelsAuthProfileDisableParamsSchema>;
+export type ModelsAuthProfileEnableParams = Static<typeof ModelsAuthProfileEnableParamsSchema>;
+export type ModelsAuthProfileDeleteParams = Static<typeof ModelsAuthProfileDeleteParamsSchema>;
 export type ModelsListParams = Static<typeof ModelsListParamsSchema>;
 export type ModelsListResult = Static<typeof ModelsListResultSchema>;
 export type SkillsStatusParams = Static<typeof SkillsStatusParamsSchema>;

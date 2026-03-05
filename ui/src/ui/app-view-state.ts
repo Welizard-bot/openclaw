@@ -154,6 +154,8 @@ export type AppViewState = {
   wizardLoading: boolean;
   wizardBusy: boolean;
   wizardMode: "local" | "remote";
+  wizardIntent: "onboarding" | "models-auth-login";
+  wizardContextLabel: string | null;
   wizardSessionId: string | null;
   wizardStatus: "running" | "done" | "cancelled" | "error" | null;
   wizardError: string | null;
@@ -325,7 +327,11 @@ export type AppViewState = {
   handlePromoteModelAuthProfile: (provider: string, profileId: string) => Promise<void>;
   handleClearModelAuthOrder: (provider: string) => Promise<void>;
   handleClearModelAuthCooldown: (profileId: string) => Promise<void>;
+  handleDisableModelAuthProfile: (profileId: string) => Promise<void>;
+  handleEnableModelAuthProfile: (profileId: string) => Promise<void>;
+  handleDeleteModelAuthProfile: (profileId: string) => Promise<void>;
   handleStartSetupWizard: (mode: "local" | "remote") => Promise<void>;
+  handleStartProviderAuth: (provider: string) => Promise<void>;
   handleSubmitSetupWizard: () => Promise<void>;
   handleCancelSetupWizard: () => Promise<void>;
   handleDismissSetupWizard: () => void;
